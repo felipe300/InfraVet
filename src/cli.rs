@@ -9,10 +9,9 @@ pub struct Args {
 
 #[derive(Subcommand, Debug)]
 pub enum Subcmd {
-    /// Search for a file recursively
+    /// Search for a file recursively. Ex: "Dockerfile"
     Search {
-        #[clap(short = 'f')]
-        #[clap(long = "filename")]
+        #[clap(short = 'f', long = "filename")]
         filename: String,
     },
 }
