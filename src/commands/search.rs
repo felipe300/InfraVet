@@ -1,40 +1,43 @@
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+use crate::utils::output;
+
 pub fn search(filename: String) -> Result<()> {
     let current_dir = env::current_dir()?;
 
-    println!(
+    output::info(&format!(
         "Buscando '{}' recursivamente en: {}",
         filename,
-        current_dir.display()
-    );
+        output::highlight_path(&current_dir.display().to_string())
+    ));
 
     let found_files = search_recursive(&current_dir, &filename);
 
     if found_files.is_empty() {
-        println!(
+        output::error(&format!(
             "No se encontraron archivos que coincidan con '{}'.",
-            filename
-        );
+            filename,
+        ));
+
         return Ok(());
     }
 
-    println!("\nSe encontraron {} archivo(s):", found_files.len());
+    output::success(&format!("Se encontraron {} archivo(s):", found_files.len()));
 
     for (index, file) in found_files.iter().enumerate() {
-        println!(" {}.- {}", index + 1, file.display());
+        println!(
+            "  {}. {}",
+            index + 1,
+            output::highlight_path(&file.display().to_string())
+        );
 
-        // Exmaple for linter
-        // match DockerfileSummary::parse_from_file(file) {
+        // Ejemplo para conectar con el linter/parser en el futuro:
+        // match crate::models::DockerfileSummary::parse_from_file(file) {
         //     Ok(summary) => println!("{:#?}", summary),
-        //     Err(e) => eprintln!(
-        //         "  [!] Error procesando {}: {}",
-        //         file.display(),
-        //         e
-        //     ),
+        //     Err(e) => output::error(&format!("Error procesando {}: {}", file.display(), e)),
         // }
     }
 

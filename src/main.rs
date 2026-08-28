@@ -1,18 +1,20 @@
 use anyhow::Result;
 use clap::Parser;
 
+use crate::cli::Command;
+
 mod cli;
 mod commands;
-// mod models;
+mod utils;
 
-use cli::{Args, Subcmd};
+use cli::Args;
 use commands::search;
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    match args.subcommand {
-        Subcmd::Search { filename } => search(filename)?,
+    match args.command {
+        Command::Search { filename } => search(filename)?,
     }
 
     Ok(())

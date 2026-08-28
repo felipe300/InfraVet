@@ -1,17 +1,35 @@
-use clap::{Parser, Subcommand};
+use clap::{
+    Parser, Subcommand,
+    builder::styling::{AnsiColor, Effects, Styles},
+};
 
-#[derive(Parser, Debug)]
-#[command(version = "0.1.0", about, long_about = None)]
-pub struct Args {
-    #[clap(subcommand)]
-    pub subcommand: Subcmd,
+fn cli_styles() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Green.on_default() | Effects::BOLD)
+        .usage(AnsiColor::Green.on_default() | Effects::BOLD)
+        .literal(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .placeholder(AnsiColor::Yellow.on_default())
 }
 
-#[derive(Subcommand, Debug)]
-pub enum Subcmd {
-    /// Search for a file recursively. Ex: "Dockerfile"
+#[derive(Debug, Parser)]
+#[command(
+    version,
+    about = "CLI tool to analyze DevOps Infrastructure",
+    styles = cli_styles()
+)]
+pub struct Args {
+    #[command(subcommand)]
+    pub command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum Command {
+    /// Search for a file recursively.
+    ///
+    /// Example: `infraVet search -f Dockerfile`
     Search {
-        #[clap(short = 'f', long = "filename")]
+        /// Filename to search for.
+        #[arg(short = 'f', long, default_value = "Dockerfile")]
         filename: String,
     },
 }
