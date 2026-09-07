@@ -12,6 +12,7 @@ pub fn info(message: &str) {
     println!("{} {}", "ℹ".cyan().bold(), message);
 }
 
+#[allow(dead_code)]
 pub fn warning(message: &str) {
     println!("{} {}", "⚠".yellow().bold(), message.yellow());
 }

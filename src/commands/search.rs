@@ -3,6 +3,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+use crate::analyzer::dockerfile::{Severity, analyze_dockerfile};
 use crate::utils::output;
 
 pub fn search(filename: String) -> Result<()> {
@@ -34,11 +35,34 @@ pub fn search(filename: String) -> Result<()> {
             output::highlight_path(&file.display().to_string())
         );
 
-        // Ejemplo para conectar con el linter/parser en el futuro:
-        // match crate::models::DockerfileSummary::parse_from_file(file) {
-        //     Ok(summary) => println!("{:#?}", summary),
-        //     Err(e) => output::error(&format!("Error procesando {}: {}", file.display(), e)),
-        // }
+        match analyze_dockerfile(file) {
+            Ok(issues) => {
+                if issues.is_empty() {
+                    output::success("     ✓ El Dockerfile no presenta observaciones.");
+                } else {
+                    for issue in issues {
+                        match issue.severity {
+                            Severity::Error => {
+                                output::error(&format!(
+                                    "     [Línea {}] Error: {}",
+                                    issue.line, issue.message
+                                ));
+                            }
+                            Severity::Warning => {
+                                output::warning(&format!(
+                                    "     [Línea {}] Advertencia: {}",
+                                    issue.line, issue.message
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+
+            Err(err) => {
+                output::error(&format!("     Error leyendo el archivo: {}", err));
+            }
+        }
     }
 
     Ok(())
