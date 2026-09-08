@@ -3,14 +3,14 @@ use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::analyzer::dockerfile::{Severity, analyze_dockerfile};
+use crate::analyzer::dockerfile::analyze_dockerfile;
 use crate::utils::output;
 
 pub fn search(filename: String) -> Result<()> {
     let current_dir = env::current_dir()?;
 
     output::info(&format!(
-        "Buscando '{}' recursivamente en: {}",
+        "Searching for '{}' recursively in: {}",
         filename,
         output::highlight_path(&current_dir.display().to_string())
     ));
@@ -18,19 +18,16 @@ pub fn search(filename: String) -> Result<()> {
     let found_files = search_recursive(&current_dir, &filename);
 
     if found_files.is_empty() {
-        output::error(&format!(
-            "No se encontraron archivos que coincidan con '{}'.",
-            filename,
-        ));
+        output::error(&format!("No files matching '{}' were found.", filename));
 
         return Ok(());
     }
 
-    output::success(&format!("Se encontraron {} archivo(s):", found_files.len()));
+    output::success(&format!("Found {} matching file(s):", found_files.len()));
 
     for (index, file) in found_files.iter().enumerate() {
         println!(
-            "  {}. {}",
+            "\n{}. {}",
             index + 1,
             output::highlight_path(&file.display().to_string())
         );
@@ -38,29 +35,21 @@ pub fn search(filename: String) -> Result<()> {
         match analyze_dockerfile(file) {
             Ok(issues) => {
                 if issues.is_empty() {
-                    output::success("     ✓ El Dockerfile no presenta observaciones.");
+                    output::success("   The Dockerfile has no issues.");
                 } else {
                     for issue in issues {
-                        match issue.severity {
-                            Severity::Error => {
-                                output::error(&format!(
-                                    "     [Línea {}] Error: {}",
-                                    issue.line, issue.message
-                                ));
-                            }
-                            Severity::Warning => {
-                                output::warning(&format!(
-                                    "     [Línea {}] Advertencia: {}",
-                                    issue.line, issue.message
-                                ));
-                            }
-                        }
+                        output::issue(
+                            &issue.severity,
+                            &issue.rule.to_string(),
+                            issue.line,
+                            &issue.message,
+                        );
                     }
                 }
             }
 
             Err(err) => {
-                output::error(&format!("     Error leyendo el archivo: {}", err));
+                output::error(&format!("   Error reading file: {}", err));
             }
         }
     }
@@ -73,12 +62,13 @@ fn search_recursive(root: &Path, target_name: &str) -> Vec<PathBuf> {
 
     let walker = WalkDir::new(root)
         .into_iter()
-        .filter_entry(|e| !is_hidden_or_ignored(e));
+        .filter_entry(|entry| !is_hidden_or_ignored(entry));
 
-    for entry in walker.filter_map(|e| e.ok()) {
+    for entry in walker.filter_map(|entry| entry.ok()) {
         let path = entry.path();
+
         if path.is_file() {
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
                 if name == target_name || name.starts_with(&format!("{}.", target_name)) {
                     matches.push(path.to_path_buf());
                 }
@@ -93,6 +83,6 @@ fn is_hidden_or_ignored(entry: &walkdir::DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .map(|s| s.starts_with('.') || s == "target" || s == "node_modules")
+        .map(|name| name.starts_with('.') || name == "target" || name == "node_modules")
         .unwrap_or(false)
 }
