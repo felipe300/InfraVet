@@ -1,5 +1,7 @@
 use colored::Colorize;
 
+use crate::analyzer::issue::Severity;
+
 pub fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
 }
@@ -12,9 +14,19 @@ pub fn info(message: &str) {
     println!("{} {}", "ℹ".cyan().bold(), message);
 }
 
-#[allow(dead_code)]
-pub fn warning(message: &str) {
-    println!("{} {}", "⚠".yellow().bold(), message.yellow());
+pub fn issue(severity: &Severity, rule: &str, line: usize, message: &str) {
+    let (symbol, label) = match severity {
+        Severity::Error => ("✗".red().bold(), "ERROR".red().bold()),
+        Severity::Warning => ("⚠".yellow().bold(), "WARNING".yellow().bold()),
+        Severity::Info => ("ℹ".cyan().bold(), "INFO".cyan().bold()),
+    };
+
+    let rule = rule.bright_magenta().bold();
+
+    println!(
+        "  {} {:<6} {:<8} [line {}] {}",
+        symbol, rule, label, line, message
+    );
 }
 
 pub fn highlight_path(path: &str) -> String {
