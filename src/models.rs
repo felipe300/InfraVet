@@ -1,6 +1,19 @@
-use serde::{Deserialize, Serialize};
+use clap::ValueEnum;
 
-#[derive(Serialize, Deserialize)]
-pub struct FileName {
-    pub name: String,
+#[derive(Debug, Clone, ValueEnum)]
+pub enum FileType {
+    #[value(name = "dockerfile")]
+    Dockerfile,
+
+    #[value(name = "compose")]
+    Compose,
+
+    #[value(name = "terraform")]
+    Terraform,
+
+    #[value(name = "kubernetes")]
+    Kubernetes,
+
+    #[value(name = "ansible")]
+    Ansible,
 }

@@ -6,16 +6,17 @@ use crate::cli::Command;
 mod analyzer;
 mod cli;
 mod commands;
+mod models;
 mod utils;
 
 use cli::Args;
-use commands::search;
+use commands::scan;
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Command::Search { filename } => search(filename)?,
+        Command::Scan { file_type } => scan(file_type)?,
     }
 
     Ok(())

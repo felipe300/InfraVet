@@ -1,5 +1,5 @@
 use clap::{
-    Parser, Subcommand,
+    Parser, Subcommand, ValueEnum,
     builder::styling::{AnsiColor, Effects, Styles},
 };
 
@@ -24,12 +24,17 @@ pub struct Args {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Search for a file recursively.
+    /// Scan infrastructure files recursively.
     ///
-    /// Example: `infraVet search -f Dockerfile`
-    Search {
-        /// Filename to search for.
-        #[arg(short = 'f', long, default_value = "Dockerfile")]
-        filename: String,
+    /// Example: `infra_vet scan --type dockerfile`
+    Scan {
+        /// Type of infrastructure file to scan.
+        #[arg(
+            short = 't',
+            long = "type",
+            value_enum,
+            default_value_t = FileType::Dockerfile
+        )]
+        file_type: FileType,
     },
 }
