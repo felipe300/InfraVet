@@ -68,17 +68,18 @@ mod tests {
         };
     }
     // TODO: Enable when Compose analyzer is implemented.
-    //
-    // #[test]
-    // fn scan_accepts_compose_type() {
-    //     let args = Args::try_parse_from(["infra_vet", "scan", "-t", "compose"]).unwrap();
-    //
-    //     match args.command {
-    //         Command::Scan { file_type } => {
-    //             assert_eq!(file_type, FileType::Compose);
-    //         }
-    //     };
-    // }
+
+    #[test]
+    #[ignore]
+    fn scan_accepts_compose_type() {
+        let args = Args::try_parse_from(["infra_vet", "scan", "-t", "compose"]).unwrap();
+
+        match args.command {
+            Command::Scan { file_type } => {
+                assert_eq!(file_type, FileType::Compose);
+            }
+        };
+    }
 
     #[test]
     fn scan_accepts_long_argument() {
