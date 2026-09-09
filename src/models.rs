@@ -1,6 +1,6 @@
 use clap::ValueEnum;
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum, PartialEq)]
 pub enum FileType {
     #[value(name = "dockerfile")]
     Dockerfile,
