@@ -72,6 +72,7 @@ fn scan_recursive(root: &Path, target_name: &str) -> Vec<PathBuf> {
     let walker = WalkDir::new(root)
         .into_iter()
         .filter_entry(|entry| !is_hidden_or_ignored(entry));
+    // let walker = WalkDir::new(root).into_iter();
 
     for entry in walker.filter_map(|entry| entry.ok()) {
         let path = entry.path();
@@ -94,4 +95,104 @@ fn is_hidden_or_ignored(entry: &walkdir::DirEntry) -> bool {
         .to_str()
         .map(|name| name.starts_with('.') || name == "target" || name == "node_modules")
         .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::{self, File};
+    use tempfile::tempdir;
+
+    fn create_test_structure() -> (tempfile::TempDir, PathBuf) {
+        let dir = tempdir().unwrap();
+        let root = dir.path().join("test_project");
+        fs::create_dir(&root).unwrap();
+
+        // Root files
+        File::create(root.join("Dockerfile")).unwrap();
+        File::create(root.join("Dockerfile.local")).unwrap();
+        File::create(root.join("README.md")).unwrap();
+        File::create(root.join(".env")).unwrap();
+        File::create(root.join(".gitignore")).unwrap();
+
+        // app/
+        let app = root.join("app");
+        fs::create_dir(&app).unwrap();
+        File::create(app.join("Dockerfile.prod")).unwrap();
+        File::create(app.join("main.rs")).unwrap();
+
+        // Ignored directories
+        for name in ["target", "node_modules", ".git"] {
+            let dir_path = root.join(name);
+            fs::create_dir(&dir_path).unwrap();
+            File::create(dir_path.join("Dockerfile")).unwrap();
+        }
+
+        (dir, root)
+    }
+
+    struct DirGuard(PathBuf);
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = env::set_current_dir(&self.0);
+        }
+    }
+
+    #[test]
+    fn test_scan_recursive_finds_dockerfile() {
+        let (_dir, root) = create_test_structure();
+        let matches = scan_recursive(&root, "Dockerfile");
+
+        assert_eq!(matches.len(), 3);
+
+        assert!(matches.contains(&root.join("Dockerfile")));
+        assert!(matches.contains(&root.join("Dockerfile.local")));
+        assert!(matches.contains(&root.join("app/Dockerfile.prod")));
+    }
+
+    #[test]
+    fn test_scan_recursive_ignores_target_and_hidden() {
+        let (_dir, root) = create_test_structure();
+        let matches = scan_recursive(&root, "Dockerfile");
+
+        // assert!(matches.is_empty());
+        assert!(
+            !matches
+                .iter()
+                .any(|path| path.starts_with(root.join("target")))
+        );
+        assert!(
+            !matches
+                .iter()
+                .any(|path| path.starts_with(root.join("node_modules")))
+        );
+        assert!(
+            !matches
+                .iter()
+                .any(|path| path.starts_with(root.join(".git")))
+        );
+    }
+
+    #[test]
+    fn test_scan_unsupported_file_type() {
+        let result = scan(FileType::Terraform);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_scan_execution_in_temp_dir() {
+        // This test only checks that `scan` executes without errors.
+        // It does not check whether a Dockerfile exists.
+        let dir = tempdir().unwrap();
+
+        // Temporarily change the current directory to test `env::current_dir()`.
+        let original_dir = env::current_dir().unwrap();
+        let _guard = DirGuard(original_dir);
+
+        env::set_current_dir(dir.path()).unwrap();
+
+        let result = scan(FileType::Dockerfile);
+
+        assert!(result.is_ok());
+    }
 }
