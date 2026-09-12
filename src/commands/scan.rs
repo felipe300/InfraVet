@@ -3,7 +3,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use crate::analyzer::dockerfile::analyze_dockerfile;
+use crate::analyzers::dockerfile::parser::analyze_dockerfile;
 use crate::models::FileType;
 use crate::utils::output;
 

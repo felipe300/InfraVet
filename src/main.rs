@@ -3,9 +3,10 @@ use clap::Parser;
 
 use crate::cli::Command;
 
-mod analyzer;
+mod analyzers;
 mod cli;
 mod commands;
+mod core;
 mod models;
 mod utils;
 

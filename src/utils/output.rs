@@ -1,7 +1,7 @@
 use colored::Colorize;
 use std::path::Path;
 
-use crate::analyzer::issue::{RuleId, Severity};
+use crate::core::issue::{RuleId, Severity};
 
 pub fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
