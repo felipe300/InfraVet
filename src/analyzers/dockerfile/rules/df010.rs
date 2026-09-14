@@ -46,3 +46,38 @@ impl DockerfileRule for DF010 {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dockerfile_parser::Dockerfile;
+
+    #[test]
+    fn test_triggers_on_uncleaned_opt() {
+        let content = "RUN apt-get update && apt-get install -y curl";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF010.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_some());
+        assert_eq!(issue.unwrap().rule, RuleId::new("DF010"));
+    }
+
+    #[test]
+    fn test_passes_on_clean_apt() {
+        let content =
+            "RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF010.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_some());
+    }
+
+    #[test]
+    fn test_passes_on_apk_no_cache() {
+        let content = "RUN apk add --no-cache curl";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF010.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_none());
+    }
+}
