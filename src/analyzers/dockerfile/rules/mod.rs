@@ -6,13 +6,7 @@ pub mod df005;
 pub mod df006;
 pub mod df007;
 pub mod df008;
+pub mod df010;
 
-use crate::core::rule::DockerfileRule;
-
-pub fn all_rules() -> Vec<Box<dyn DockerfileRule>> {
-    vec![
-        Box::new(df002::DF002),
-        Box::new(df003::DF003),
-        Box::new(df005::DF005),
-    ]
-}
+pub mod execution_rules;
+pub mod instruction_rules;

@@ -3,9 +3,9 @@ use dockerfile_parser::Dockerfile;
 use std::{fs, path::Path};
 
 use crate::analyzers::dockerfile::context::AnalysisContext;
-use crate::analyzers::dockerfile::rules::{
-    all_rules, df001::DF001, df004::DF004, df006::DF006, df007::DF007,
-};
+use crate::analyzers::dockerfile::rules::execution_rules::execute_rules;
+use crate::analyzers::dockerfile::rules::instruction_rules;
+use crate::analyzers::dockerfile::rules::{df006::DF006, df007::DF007};
 use crate::core::issue::Issue;
 
 fn offset_to_line(content: &str, offset: usize) -> usize {
@@ -29,7 +29,7 @@ pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
 
     let mut issues = Vec::new();
     let mut ctx = AnalysisContext::new();
-    let rules = all_rules();
+    let rules = instruction_rules::instruction_rules();
 
     // Análisis instrucción por instrucción
     for instruction in &dockerfile.instructions {
@@ -44,14 +44,7 @@ pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
         }
     }
 
-    // Reglas de estado global
-    if let Some(issue) = DF001::check(&ctx) {
-        issues.push(issue);
-    }
-
-    if let Some(issue) = DF004::check(&ctx) {
-        issues.push(issue);
-    }
+    issues.extend(execute_rules(&content, &ctx));
 
     Ok(issues)
 }
