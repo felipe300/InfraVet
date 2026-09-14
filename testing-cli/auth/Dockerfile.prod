@@ -1,0 +1,24 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY . .
+
+ARG NODE_ENV=production
+ARG API_KEY
+ARG ACCESS_TOKEN
+
+ENV NODE_ENV=${NODE_ENV}
+ENV DATABASE_URL=${DATABASE_URL}
+ENV AUTH_SERVICE_URL=https://auth.internal.example
+ENV APP_CREDENTIALS=/run/secrets/app-credentials
+
+RUN echo "Starting application with ${NODE_ENV} configuration"
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
+

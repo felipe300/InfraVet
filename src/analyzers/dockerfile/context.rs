@@ -5,6 +5,7 @@ pub struct AnalysisContext {
     pub has_from: bool,
     pub stages_count: usize,
     pub user_in_current_stage: bool,
+    pub has_healthcheck: bool,
 }
 
 impl AnalysisContext {
@@ -21,13 +22,11 @@ impl AnalysisContext {
                 self.user_in_current_stage = false;
             }
             Instruction::Misc(misc) => {
-                if misc
-                    .instruction
-                    .content
-                    .as_str()
-                    .eq_ignore_ascii_case("User")
-                {
+                let name = misc.instruction.content.as_str();
+                if name.eq_ignore_ascii_case("User") {
                     self.user_in_current_stage = true;
+                } else if name.eq_ignore_ascii_case("HEALTHCHECK") {
+                    self.has_healthcheck = true;
                 }
             }
             _ => {}

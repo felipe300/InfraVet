@@ -1,7 +1,7 @@
 use crate::{
     analyzers::dockerfile::{
         context::AnalysisContext,
-        rules::{df001::DF001, df004::DF004},
+        rules::{df001::DF001, df004::DF004, df011::DF011},
     },
     core::issue::Issue,
 };
@@ -14,6 +14,10 @@ pub fn execute_rules(ctx: &AnalysisContext) -> Vec<Issue> {
     }
 
     if let Some(issue) = DF004::check(ctx) {
+        issues.push(issue);
+    }
+
+    if let Some(issue) = DF011::check(ctx) {
         issues.push(issue);
     }
 

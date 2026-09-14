@@ -1,0 +1,25 @@
+FROM alpine:3.20
+
+# Variables que deberían ser detectadas por el linter
+ENV SECRET="fake-secret-for-testing"
+ENV PASSWORD="not-a-real-password"
+ENV PASSWD="dummy-passwd"
+ENV PWD="/app"
+ENV API_KEY="fake-api-key-123"
+ENV APIKEY="dummy-apikey"
+ENV TOKEN="fake-token-for-linter-test"
+ENV AUTH="fake-auth-value"
+ENV PRIVATE_KEY="-----BEGIN FAKE PRIVATE KEY-----"
+ENV CREDENTIAL="dummy-credential"
+ENV ACCESS_KEY="fake-access-key"
+
+WORKDIR /app
+
+# También aparecen en instrucciones RUN
+RUN echo "SECRET=$SECRET" \
+    && echo "PASSWORD=$PASSWORD" \
+    && echo "TOKEN=$TOKEN"
+
+CMD ["sh"]
+
+

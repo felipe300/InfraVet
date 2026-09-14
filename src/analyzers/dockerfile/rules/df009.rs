@@ -4,73 +4,98 @@ use dockerfile_parser::Instruction;
 
 pub struct DF009;
 
+// Keywords to search
+const SENSITIVE_KEYWORDS: &[&str] = &[
+    "SECRET",
+    "PASSWORD",
+    "PASSWD",
+    "PWD",
+    "API_KEY",
+    "APIKEY",
+    "TOKEN",
+    "AUTH",
+    "PRIVATE_KEY",
+    "CREDENTIAL",
+    "ACCESS_KEY",
+];
+
 impl DockerfileRule for DF009 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {
-        if let Instruction::Misc(misc) = instruction {
-            let command_name = misc.instruction.content.as_str();
+        let span = match instruction {
+            Instruction::Env(env) => env.span,
+            Instruction::Arg(arg) => arg.span,
+            _ => return None,
+        };
 
-            if !command_name.eq_ignore_ascii_case("ADD") {
-                return None;
-            }
+        let command = &content[span.start..span.end];
+        let uppercase_command = command.to_uppercase();
 
-            let span = misc.span;
-            let add_str = &content[span.start..span.end];
-            let mut parts = add_str.split_whitespace();
-
-            parts.next();
-
-            let source = parts.next()?;
-
-            let is_remote_or = source.contains("http://") || source.contains("https://");
-
-            let is_archive = source.ends_with(".tar")
-                || source.ends_with(".tar.gz")
-                || source.ends_with(".tgz")
-                || source.ends_with(".zip");
-
-            if !is_remote_or && !is_archive {
+        for keyword in SENSITIVE_KEYWORDS {
+            if uppercase_command.contains(keyword) {
                 return Some(Issue {
-                        rule: RuleId::new("DF008"),
+                        rule: RuleId::new("DF009"),
                         line,
-                        message: "Use 'COPY' instead of 'ADD' for local files and directories unless extracting archives or fetching remote URLs.".into(),
-                        severity: Severity::Warning,
+                        message: "Possible sensitive data or credential found in ENV or Arg instruction. Use secret mounts or runtime environment variables instead.".into(),
+                        severity: Severity::Error,
                     });
             }
         }
+
         None
     }
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use dockerfile_parser::Dockerfile;
 
     #[test]
-    fn test_triggers_on_simple_add() {
-        let content = "ADD app.js /app/";
+    fn test_triggers_on_env_password() {
+        let content = "ENV DB_PASSWORD=secret123";
         let dockerfile = Dockerfile::parse(content).unwrap();
-        let issue = DF008.check(&dockerfile.instructions[0], content, 0);
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
 
         assert!(issue.is_some());
-        assert_eq!(issue.unwrap().rule, RuleId::new("DF008"));
+        assert_eq!(issue.unwrap().rule, RuleId::new("DF009"));
     }
 
     #[test]
-    fn test_allows_tar_gz_archive() {
-        let content = "ADD archive.tar.gz /app/";
+    fn test_triggers_on_env_api_key() {
+        let content = "ENV API_KEY=xyz123";
         let dockerfile = Dockerfile::parse(content).unwrap();
-        let issue = DF008.check(&dockerfile.instructions[0], content, 1);
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_some());
+        assert_eq!(issue.unwrap().rule, RuleId::new("DF009"));
+    }
+
+    #[test]
+    fn test_passes_on_safe_env() {
+        let content = "ENV PORT=8080";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
 
         assert!(issue.is_none());
     }
 
     #[test]
-    fn test_allows_url() {
-        let content = "ADD https://example.com/file.txt /app/";
+    fn test_triggers_on_arg_password() {
+        let content = "ARG DB_PASSWORD=secret123";
         let dockerfile = Dockerfile::parse(content).unwrap();
-        let issue = DF008.check(&dockerfile.instructions[0], content, 1);
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
 
-        assert!(issue.is_none());
+        assert!(issue.is_some());
+        assert_eq!(issue.unwrap().rule, RuleId::new("DF009"));
+    }
+
+    #[test]
+    fn test_triggers_on_arg_api_key() {
+        let content = "ARG API_KEY=xyz123";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_some());
+        assert_eq!(issue.unwrap().rule, RuleId::new("DF009"));
     }
 }

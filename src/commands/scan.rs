@@ -72,7 +72,6 @@ fn scan_recursive(root: &Path, target_name: &str) -> Vec<PathBuf> {
     let walker = WalkDir::new(root)
         .into_iter()
         .filter_entry(|entry| !is_hidden_or_ignored(entry));
-    // let walker = WalkDir::new(root).into_iter();
 
     for entry in walker.filter_map(|entry| entry.ok()) {
         let path = entry.path();

@@ -6,7 +6,9 @@ pub mod df005;
 pub mod df006;
 pub mod df007;
 pub mod df008;
+pub mod df009;
 pub mod df010;
+pub mod df011;
 
 pub mod execution_rules;
 pub mod instruction_rules;
