@@ -38,13 +38,15 @@ pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
         }
     }
 
-    issues.extend({
-        let ctx: &AnalysisContext = &ctx;
-        let mut issues = Vec::new();
-        issues.extend(execution_rules::execute_rules(ctx));
+    // issues.extend({
+    //     let ctx: &AnalysisContext = &ctx;
+    //     let mut issues = Vec::new();
+    //     issues.extend(execution_rules::execute_rules(ctx));
+    //
+    //     issues
+    // });
 
-        issues
-    });
+    issues.extend(execution_rules::execute_rules(&ctx));
 
     if let Some(issue) = DF006::check(&content) {
         return Ok(vec![issue]);
