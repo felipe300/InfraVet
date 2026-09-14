@@ -3,9 +3,8 @@ use dockerfile_parser::Dockerfile;
 use std::{fs, path::Path};
 
 use crate::analyzers::dockerfile::context::AnalysisContext;
-use crate::analyzers::dockerfile::rules::df006::DF006;
-use crate::analyzers::dockerfile::rules::df007::DF007;
-use crate::analyzers::dockerfile::rules::instruction_rules;
+use crate::analyzers::dockerfile::rules::{df006::DF006, df007::DF007};
+use crate::analyzers::dockerfile::rules::{execution_rules, instruction_rules};
 use crate::core::issue::Issue;
 
 fn offset_to_line(content: &str, offset: usize) -> usize {
@@ -26,7 +25,7 @@ pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
     let mut ctx = AnalysisContext::new();
     let rules = instruction_rules::instruction_rules();
 
-    // Análisis instrucción por instrucción
+    // Analyze instruction by instruction
     for instruction in &dockerfile.instructions {
         let line = offset_to_line(&content, instruction.span().start);
 
@@ -40,15 +39,10 @@ pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
     }
 
     issues.extend({
-        let content: &str = &content;
         let ctx: &AnalysisContext = &ctx;
         let mut issues = Vec::new();
-        if let Some(issue) = DF001::check(ctx) {
-            issues.push(issue);
-        }
-        if let Some(issue) = DF004::check(ctx) {
-            issues.push(issue);
-        }
+        issues.extend(execution_rules::execute_rules(ctx));
+
         issues
     });
 

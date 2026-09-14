@@ -6,7 +6,7 @@ use crate::{
     core::issue::Issue,
 };
 
-pub fn execute_rules(_content: &str, ctx: &AnalysisContext) -> Vec<Issue> {
+pub fn execute_rules(ctx: &AnalysisContext) -> Vec<Issue> {
     let mut issues = Vec::new();
 
     if let Some(issue) = DF001::check(ctx) {
