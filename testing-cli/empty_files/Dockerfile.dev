@@ -1,0 +1,16 @@
+FROM ubuntu:24.04
+
+# DF005: debe generar warning
+RUN apt-get update
+
+# DF005: debe generar warning
+RUN apt-get update && apt-get upgrade -y
+
+# NO DF005: update + install en el mismo RUN
+RUN apt-get update && apt-get install -y curl
+
+# NO DF005: no contiene apt-get update
+RUN apt-get install -y git
+
+# DF005: update aparece, pero no install
+RUN apt-get update && echo "Updating packages"

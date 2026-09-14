@@ -1,0 +1,31 @@
+FROM ubuntu:24.04
+
+# DF008: archivo local normal → debería generar warning
+ADD app.js /app/
+
+# DF008: directorio local → debería generar warning
+ADD ./config /app/config/
+
+# DF008: otro archivo local → debería generar warning
+ADD package.json /app/
+
+# NO DF008: .tar
+ADD archive.tar /app/
+
+# NO DF008: .tar.gz
+ADD archive.tar.gz /app/
+
+# NO DF008: .tgz
+ADD archive.tgz /app/
+
+# NO DF008: .zip
+ADD archive.zip /app/
+
+# NO DF008: URL HTTP
+ADD http://example.com/file.txt /app/
+
+# NO DF008: URL HTTPS
+ADD https://example.com/file.txt /app/
+
+# NO DF008: COPY no es responsabilidad de DF008
+COPY app.js /app/
