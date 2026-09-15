@@ -1,8 +1,9 @@
-use crate::core::issue::{Issue, RuleId, Severity};
+use crate::core::issue::{Issue, RuleId};
 use crate::core::rule::DockerfileRule;
+use crate::models::Severity;
 use dockerfile_parser::Instruction;
 
-pub (crate) struct DF005;
+pub(crate) struct DF005;
 
 impl DockerfileRule for DF005 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {

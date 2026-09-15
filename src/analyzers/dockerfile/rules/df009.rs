@@ -1,8 +1,9 @@
-use crate::core::issue::{Issue, RuleId, Severity};
+use crate::core::issue::{Issue, RuleId};
 use crate::core::rule::DockerfileRule;
+use crate::models::Severity;
 use dockerfile_parser::Instruction;
 
-pub (crate) struct DF009;
+pub(crate) struct DF009;
 
 // Keywords to search
 const SENSITIVE_KEYWORDS: &[&str] = &[

@@ -1,11 +1,14 @@
 use dockerfile_parser::Instruction;
 
-use crate::core::{
-    issue::{Issue, RuleId, Severity},
-    rule::DockerfileRule,
+use crate::{
+    core::{
+        issue::{Issue, RuleId},
+        rule::DockerfileRule,
+    },
+    models::Severity,
 };
 
-pub (crate) struct DF010;
+pub(crate) struct DF010;
 
 impl DockerfileRule for DF010 {
     fn check(

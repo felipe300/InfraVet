@@ -20,6 +20,13 @@ pub(crate) enum FileType {
     Ansible,
 }
 
+#[derive(Debug, PartialEq)]
+pub(crate) enum Severity {
+    Error,
+    Warning,
+    Info,
+}
+
 #[derive(Deserialize, Debug)]
 pub(crate) struct RulesConfig {
     pub(crate) rules: Vec<Rule>,

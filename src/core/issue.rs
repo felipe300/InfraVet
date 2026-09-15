@@ -1,17 +1,12 @@
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
-pub (crate) enum Severity {
-    Error,
-    Warning,
-    Info,
-}
+use crate::models::Severity;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub (crate) struct RuleId(String);
+pub(crate) struct RuleId(String);
 
 impl RuleId {
-    pub (crate) fn new(id: impl Into<String>) -> Self {
+    pub(crate) fn new(id: impl Into<String>) -> Self {
         Self(id.into())
     }
 }
@@ -23,11 +18,11 @@ impl fmt::Display for RuleId {
 }
 
 #[derive(Debug)]
-pub (crate) struct Issue {
-    pub (crate) rule: RuleId,
-    pub (crate) line: usize,
-    pub (crate) message: String,
-    pub (crate) severity: Severity,
+pub(crate) struct Issue {
+    pub(crate) rule: RuleId,
+    pub(crate) line: usize,
+    pub(crate) message: String,
+    pub(crate) severity: Severity,
 }
 
 #[cfg(test)]

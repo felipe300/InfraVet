@@ -1,10 +1,11 @@
 use crate::analyzers::dockerfile::context::AnalysisContext;
-use crate::core::issue::{Issue, RuleId, Severity};
+use crate::core::issue::{Issue, RuleId};
+use crate::models::Severity;
 
-pub (crate) struct DF001;
+pub(crate) struct DF001;
 
 impl DF001 {
-    pub (crate) fn check(ctx: &AnalysisContext) -> Option<Issue> {
+    pub(crate) fn check(ctx: &AnalysisContext) -> Option<Issue> {
         if !ctx.has_from {
             Some(Issue {
                 rule: RuleId::new("DF001"),
