@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 
-use crate::cli::Command;
+use crate::cli::Commands;
 
 mod analyzers;
 mod cli;
@@ -11,13 +11,14 @@ mod models;
 mod utils;
 
 use cli::Args;
-use commands::scan;
+use commands::{rules, scan};
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Command::Scan { file_type } => scan(file_type)?,
+        Commands::Scan { file_type } => scan(file_type)?,
+        Commands::Rules => rules()?,
     }
 
     Ok(())

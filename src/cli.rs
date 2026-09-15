@@ -19,13 +19,13 @@ fn cli_styles() -> Styles {
     about = "CLI tool to analyze DevOps Infrastructure",
     styles = cli_styles()
 )]
-pub struct Args {
+pub (crate) struct Args {
     #[command(subcommand)]
-    pub command: Command,
+    pub (crate) command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
-pub enum Command {
+pub (crate) enum Commands {
     /// Scan infrastructure files recursively.
     ///
     /// Example: `infra_vet scan --type dockerfile`
@@ -39,6 +39,8 @@ pub enum Command {
         )]
         file_type: FileType,
     },
+    /// List of current rules per DevOps tools
+    Rules,
 }
 
 #[cfg(test)]
@@ -51,8 +53,11 @@ mod tests {
         let args = Args::try_parse_from(["infravet", "scan"]).unwrap();
 
         match args.command {
-            Command::Scan { file_type } => {
+            Commands::Scan { file_type } => {
                 assert_eq!(file_type, FileType::Dockerfile);
+            }
+            Commands::Rules => {
+                todo!()
             }
         }
     }
@@ -62,8 +67,11 @@ mod tests {
         let args = Args::try_parse_from(["infra_vet", "scan", "-t", "dockerfile"]).unwrap();
 
         match args.command {
-            Command::Scan { file_type } => {
+            Commands::Scan { file_type } => {
                 assert_eq!(file_type, FileType::Dockerfile);
+            }
+            Commands::Rules => {
+                todo!()
             }
         };
     }
@@ -77,8 +85,11 @@ mod tests {
         let args = Args::try_parse_from(["infra_vet", "scan", "-t", "compose"]).unwrap();
 
         match args.command {
-            Command::Scan { file_type } => {
+            Commands::Scan { file_type } => {
                 assert_eq!(file_type, FileType::Compose);
+            }
+            Commands::Rules => {
+                todo!()
             }
         };
     }
@@ -88,8 +99,11 @@ mod tests {
         let args = Args::try_parse_from(["infra_vet", "scan", "--type", "dockerfile"]).unwrap();
 
         match args.command {
-            Command::Scan { file_type } => {
+            Commands::Scan { file_type } => {
                 assert_eq!(file_type, FileType::Dockerfile);
+            }
+            Commands::Rules => {
+                todo!()
             }
         };
     }
