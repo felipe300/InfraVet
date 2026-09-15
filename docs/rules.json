@@ -11,6 +11,126 @@
       "example": {
         "code": "RUN echo \"Hello\""
       }
+    },
+    {
+      "code": "DF002",
+      "file_type": "dockerfile",
+      "category": "security",
+      "severity": "WARNING",
+      "title": "Copying entire build context",
+      "description": "The Dockerfile uses COPY . ., which copies the entire build context into the image and may include unnecessary or sensitive files.",
+      "recommendation": "Copy only the files or directories required by the application and use a .dockerignore file to exclude unnecessary files.",
+      "example": {
+        "code": "COPY . ."
+      }
+    },
+    {
+      "code": "DF003",
+      "file_type": "dockerfile",
+      "category": "reproducibility",
+      "severity": "INFO",
+      "title": "Base image uses latest tag",
+      "description": "The base image uses the latest tag, which can cause builds to use different image versions over time.",
+      "recommendation": "Use a specific image version or digest instead of the latest tag to make builds more reproducible.",
+      "example": {
+        "code": "FROM ubuntu:latest"
+      }
+    },
+    {
+      "code": "DF004",
+      "file_type": "dockerfile",
+      "category": "security",
+      "severity": "WARNING",
+      "title": "Missing USER instruction",
+      "description": "The Dockerfile does not define a USER instruction for the current stage, causing the container to run as the root user.",
+      "recommendation": "Create and use a dedicated non-root user when root privileges are not required.",
+      "example": {
+        "code": "FROM alpine:3.18\nRUN apk add --no-cache python3"
+      }
+    },
+    {
+      "code": "DF005",
+      "file_type": "dockerfile",
+      "category": "build",
+      "severity": "WARNING",
+      "title": "Unlinked apt-get update",
+      "description": "The Dockerfile runs apt-get update without apt-get install in the same RUN instruction, which can result in stale package indexes in later layers.",
+      "recommendation": "Combine apt-get update and apt-get install in the same RUN instruction and clean the package lists afterward.",
+      "example": {
+        "code": "RUN apt-get update"
+      }
+    },
+    {
+      "code": "DF006",
+      "file_type": "dockerfile",
+      "category": "syntax",
+      "severity": "ERROR",
+      "title": "Empty Dockerfile",
+      "description": "The Dockerfile contains no instructions or only whitespace.",
+      "recommendation": "Add valid Dockerfile instructions, including at least a FROM instruction.",
+      "example": {
+        "code": ""
+      }
+    },
+    {
+      "code": "DF007",
+      "file_type": "dockerfile",
+      "category": "syntax",
+      "severity": "ERROR",
+      "title": "Invalid Dockerfile syntax",
+      "description": "The Dockerfile contains syntax errors that prevent it from being parsed correctly.",
+      "recommendation": "Review the Dockerfile syntax and correct the invalid instruction or syntax.",
+      "example": {
+        "code": "INVALID_INSTRUCTION something"
+      }
+    },
+    {
+      "code": "DF008",
+      "file_type": "dockerfile",
+      "category": "best-practice",
+      "severity": "WARNING",
+      "title": "Use COPY instead of ADD",
+      "description": "The Dockerfile uses ADD for local files or directories when COPY would be more explicit and predictable.",
+      "recommendation": "Use COPY for local files and directories unless ADD is required for archive extraction or remote URL handling.",
+      "example": {
+        "code": "FROM alpine:3.18\nADD app.js /app/"
+      }
+    },
+    {
+      "code": "DF009",
+      "file_type": "dockerfile",
+      "category": "security",
+      "severity": "ERROR",
+      "title": "Possible sensitive data in ENV or ARG",
+      "description": "An ENV or ARG instruction contains a keyword commonly associated with sensitive data or credentials.",
+      "recommendation": "Avoid storing sensitive data in ENV or ARG instructions. Use secret mounts or provide secrets through runtime environment variables instead.",
+      "example": {
+        "code": "FROM alpine:3.18\nENV DB_PASSWORD=secret123"
+      }
+    },
+    {
+      "code": "DF010",
+      "file_type": "dockerfile",
+      "category": "performance",
+      "severity": "WARNING",
+      "title": "Uncleaned package manager caches",
+      "description": "The Dockerfile installs packages without properly cleaning the package manager cache, which can increase the resulting image size.",
+      "recommendation": "Clean package manager caches after installation. For apt, remove /var/lib/apt/lists/*; for apk, use --no-cache or remove the package cache.",
+      "example": {
+        "code": "FROM ubuntu:22.04\nRUN apt-get update && apt-get install -y curl"
+      }
+    },
+    {
+      "code": "DF011",
+      "file_type": "dockerfile",
+      "category": "best-practice",
+      "severity": "INFO",
+      "title": "Missing HEALTHCHECK instruction",
+      "description": "The Dockerfile does not define a HEALTHCHECK instruction, which can prevent Docker from automatically monitoring the container's health status.",
+      "recommendation": "Add a HEALTHCHECK instruction when the application provides a meaningful health check.",
+      "example": {
+        "code": "FROM nginx:alpine"
+      }
     }
   ]
 }

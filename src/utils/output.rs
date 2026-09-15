@@ -102,10 +102,13 @@ fn rule_definition(rule: &RuleDefinition) {
 
     println!();
     println!("    {}", "Example:".blue().bold());
-    println!("      {}", rule.example.code);
+
+    for line in rule.example.code.lines() {
+        println!("    {}", line);
+    }
 
     println!();
-    println!("{}", "─".repeat(60).dimmed());
+    println!("{}", "─".repeat(80).dimmed());
     println!();
 }
 
