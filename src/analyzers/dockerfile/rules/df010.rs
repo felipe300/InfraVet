@@ -21,10 +21,13 @@ impl DockerfileRule for DF010 {
             let span = run.span;
             let run_str = &content[span.start..span.end];
 
-            if (run_str.contains("apt-get install"))
+            let has_apt_install = run_str.contains("apt-get install")
                 || run_str.contains("apt install")
-                || run_str.contains("apt get install") && !run_str.contains("/var/lib/apt/lists")
-            {
+                || run_str.contains("apt get install");
+
+            let has_apt_cleanup = run_str.contains("/var/lib/apt/lists");
+
+            if has_apt_install && !has_apt_cleanup {
                 return Some(Issue {
                     rule: RuleId::new("DF010"),
                     line,
@@ -33,10 +36,11 @@ impl DockerfileRule for DF010 {
                 });
             }
 
-            if run_str.contains("apk add")
-                && !run_str.contains("--no-cache")
-                && !run_str.contains("/var/check/apk")
-            {
+            let has_apk_install = run_str.contains("apk add");
+            let has_apk_no_cache = run_str.contains("--no-cache");
+            let has_apk_cleanup = run_str.contains("/var/cache/apk");
+
+            if has_apk_install && !has_apk_no_cache && !has_apk_cleanup {
                 return Some(Issue {
                     rule: RuleId::new("DF010"),
                     line,
@@ -72,7 +76,7 @@ mod tests {
         let dockerfile = Dockerfile::parse(content).unwrap();
         let issue = DF010.check(&dockerfile.instructions[0], content, 1);
 
-        assert!(issue.is_some());
+        assert!(issue.is_none());
     }
 
     #[test]
