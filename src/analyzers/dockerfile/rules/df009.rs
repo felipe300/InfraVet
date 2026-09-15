@@ -81,6 +81,33 @@ mod tests {
     }
 
     #[test]
+    fn test_should_not_detects_sensitive_keyword_case_insensitive() {
+        let content = "ENV PORT=3000";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_none());
+    }
+
+    #[test]
+    fn test_detects_sensitive_keyword_case_insensitive() {
+        let content = "ENV api_key=test";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_some());
+    }
+
+    #[test]
+    fn test_detects_sensitive_keyword_case_insensitive_arg() {
+        let content = "ARG api_key=test";
+        let dockerfile = Dockerfile::parse(content).unwrap();
+        let issue = DF009.check(&dockerfile.instructions[0], content, 1);
+
+        assert!(issue.is_some());
+    }
+
+    #[test]
     fn test_triggers_on_arg_password() {
         let content = "ARG DB_PASSWORD=secret123";
         let dockerfile = Dockerfile::parse(content).unwrap();
