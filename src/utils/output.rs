@@ -1,7 +1,10 @@
 use colored::Colorize;
 use std::path::Path;
 
-use crate::{core::issue::RuleId, models::Severity};
+use crate::{
+    core::issue::RuleId,
+    models::{FileType, RuleDefinition, Severity},
+};
 
 pub(crate) fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
@@ -32,6 +35,78 @@ pub(crate) fn issue(severity: &Severity, rule: RuleId, line: usize, message: &st
 
 pub(crate) fn highlight_path(path: &Path) -> String {
     path.display().to_string().cyan().to_string()
+}
+
+pub(crate) fn rules(rules: &[RuleDefinition]) {
+    println!();
+    println!("{}", "Implemented Rules".green().bold());
+    println!();
+
+    for file_type in [
+        FileType::Dockerfile,
+        FileType::Compose,
+        FileType::Terraform,
+        FileType::Kubernetes,
+        FileType::Ansible,
+    ] {
+        let file_rules: Vec<&RuleDefinition> = rules
+            .iter()
+            .filter(|rule| rule.file_type == file_type)
+            .collect();
+
+        if file_rules.is_empty() {
+            continue;
+        }
+
+        rule_file_type_handler(&file_type);
+
+        for rule in file_rules {
+            rule_definition(rule);
+        }
+    }
+}
+
+fn rule_file_type_handler(file_type: &FileType) {
+    let title = match file_type {
+        FileType::Dockerfile => "Dockerfile",
+        FileType::Compose => "Compose",
+        FileType::Terraform => "Terraform",
+        FileType::Kubernetes => "Kubernetes",
+        FileType::Ansible => "Ansible",
+    };
+
+    println!("{}", title.blue().bold().underline());
+    println!("{}", "─".repeat(60).dimmed());
+    println!();
+}
+
+fn rule_definition(rule: &RuleDefinition) {
+    let severity = match rule.severity {
+        Severity::Error => "ERROR".red().bold(),
+        Severity::Warning => "WARNING".yellow().bold(),
+        Severity::Info => "INFO".cyan().bold(),
+    };
+
+    println!("  {}  {}", rule.code.bright_magenta().bold(), severity);
+
+    println!("    {} {}", "Title:".blue().bold(), rule.title);
+    println!("    {} {}", "Category:".blue().bold(), rule.category);
+
+    println!();
+    println!("    {}", "Description:".blue().bold());
+    println!("    {}", rule.description);
+
+    println!();
+    println!("    {}", "Recommendation:".blue().bold());
+    println!("    {}", rule.recommendation);
+
+    println!();
+    println!("    {}", "Example:".blue().bold());
+    println!("      {}", rule.example.code);
+
+    println!();
+    println!("{}", "─".repeat(60).dimmed());
+    println!();
 }
 
 #[cfg(test)]

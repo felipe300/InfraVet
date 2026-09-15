@@ -20,7 +20,8 @@ pub(crate) enum FileType {
     Ansible,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
 pub(crate) enum Severity {
     Error,
     Warning,
@@ -29,14 +30,15 @@ pub(crate) enum Severity {
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct RulesConfig {
-    pub(crate) rules: Vec<Rule>,
+    pub(crate) rules: Vec<RuleDefinition>,
 }
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct Rule {
+pub(crate) struct RuleDefinition {
     pub(crate) code: String,
+    pub(crate) file_type: FileType,
     pub(crate) category: String,
-    pub(crate) severity: String,
+    pub(crate) severity: Severity,
     pub(crate) title: String,
     pub(crate) description: String,
     pub(crate) recommendation: String,
@@ -45,5 +47,5 @@ pub(crate) struct Rule {
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct Example {
-    pub(crate) dockerfile: String,
+    pub(crate) code: String,
 }

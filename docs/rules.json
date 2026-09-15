@@ -2,13 +2,14 @@
   "rules": [
     {
       "code": "DF001",
-      "category": "dockerfile",
+      "file_type": "dockerfile",
+      "category": "syntax",
       "severity": "ERROR",
       "title": "Missing FROM instruction",
       "description": "A Dockerfile must contain at least one FROM instruction to define a build stage.",
       "recommendation": "Add a FROM instruction to define the base image and build stage.",
       "example": {
-        "dockerfile": "RUN echo \"Hello\""
+        "code": "RUN echo \"Hello\""
       }
     }
   ]
