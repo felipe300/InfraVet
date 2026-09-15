@@ -1,2 +1,2 @@
-pub mod issue;
-pub mod rule;
+pub (crate) mod issue;
+pub (crate) mod rule;

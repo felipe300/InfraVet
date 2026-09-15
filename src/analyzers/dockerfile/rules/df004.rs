@@ -1,10 +1,10 @@
 use crate::analyzers::dockerfile::context::AnalysisContext;
 use crate::core::issue::{Issue, RuleId, Severity};
 
-pub struct DF004;
+pub (crate) struct DF004;
 
 impl DF004 {
-    pub fn check(ctx: &AnalysisContext) -> Option<Issue> {
+    pub (crate) fn check(ctx: &AnalysisContext) -> Option<Issue> {
         if ctx.has_from && !ctx.user_in_current_stage {
             let message = if ctx.stages_count > 1 {
                 "Missing USER instruction in the final runtime stage. The container will run as root."

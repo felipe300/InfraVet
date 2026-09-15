@@ -1,9 +1,9 @@
 use crate::core::issue::{Issue, RuleId, Severity};
 
-pub struct DF006;
+pub (crate) struct DF006;
 
 impl DF006 {
-    pub fn check(content: &str) -> Option<Issue> {
+    pub (crate) fn check(content: &str) -> Option<Issue> {
         if content.trim().is_empty() {
             Some(Issue {
                 rule: RuleId::new("DF006"),

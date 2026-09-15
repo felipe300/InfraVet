@@ -5,7 +5,7 @@ use crate::core::{
     rule::DockerfileRule,
 };
 
-pub struct DF010;
+pub (crate) struct DF010;
 
 impl DockerfileRule for DF010 {
     fn check(

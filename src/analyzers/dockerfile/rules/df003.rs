@@ -3,7 +3,7 @@ use crate::core::rule::DockerfileRule;
 use crate::utils::utils::uses_latest_tag;
 use dockerfile_parser::Instruction;
 
-pub struct DF003;
+pub (crate) struct DF003;
 
 impl DockerfileRule for DF003 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {

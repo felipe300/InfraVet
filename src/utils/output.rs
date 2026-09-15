@@ -3,19 +3,19 @@ use std::path::Path;
 
 use crate::core::issue::{RuleId, Severity};
 
-pub fn success(message: &str) {
+pub (crate) fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
 }
 
-pub fn error(message: &str) {
+pub (crate) fn error(message: &str) {
     eprintln!("{} {}", "✖".red().bold(), message.red());
 }
 
-pub fn info(message: &str) {
+pub (crate) fn info(message: &str) {
     println!("{} {}", "ℹ".cyan().bold(), message);
 }
 
-pub fn issue(severity: &Severity, rule: RuleId, line: usize, message: &str) {
+pub (crate) fn issue(severity: &Severity, rule: RuleId, line: usize, message: &str) {
     let (symbol, label) = match severity {
         Severity::Error => ("✗".red().bold(), "ERROR".red().bold()),
         Severity::Warning => ("⚠".yellow().bold(), "WARNING".yellow().bold()),
@@ -30,7 +30,7 @@ pub fn issue(severity: &Severity, rule: RuleId, line: usize, message: &str) {
     );
 }
 
-pub fn highlight_path(path: &Path) -> String {
+pub (crate) fn highlight_path(path: &Path) -> String {
     path.display().to_string().cyan().to_string()
 }
 

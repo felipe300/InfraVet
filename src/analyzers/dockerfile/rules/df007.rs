@@ -1,9 +1,9 @@
 use crate::core::issue::{Issue, RuleId, Severity};
 
-pub struct DF007;
+pub (crate) struct DF007;
 
 impl DF007 {
-    pub fn check(err_msg: &str) -> Issue {
+    pub (crate) fn check(err_msg: &str) -> Issue {
         Issue {
             rule: RuleId::new("DF007"),
             line: 1,

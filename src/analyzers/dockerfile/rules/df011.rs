@@ -1,10 +1,10 @@
 use crate::analyzers::dockerfile::context::AnalysisContext;
 use crate::core::issue::{Issue, RuleId, Severity};
 
-pub struct DF011;
+pub (crate) struct DF011;
 
 impl DF011 {
-    pub fn check(ctx: &AnalysisContext) -> Option<Issue> {
+    pub (crate) fn check(ctx: &AnalysisContext) -> Option<Issue> {
         if !ctx.has_healthcheck {
             return Some(Issue {
                 rule: RuleId::new("DF011"),

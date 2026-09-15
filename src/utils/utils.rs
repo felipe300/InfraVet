@@ -1,4 +1,4 @@
-pub fn uses_latest_tag(from_str: &str) -> bool {
+pub (crate) fn uses_latest_tag(from_str: &str) -> bool {
     let mut parts = from_str.split_whitespace().skip(1);
 
     let image_token = match parts.find(|part| !part.starts_with("--")) {

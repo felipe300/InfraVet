@@ -1,17 +1,17 @@
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
-pub enum Severity {
+pub (crate) enum Severity {
     Error,
     Warning,
     Info,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RuleId(String);
+pub (crate) struct RuleId(String);
 
 impl RuleId {
-    pub fn new(id: impl Into<String>) -> Self {
+    pub (crate) fn new(id: impl Into<String>) -> Self {
         Self(id.into())
     }
 }
@@ -23,11 +23,11 @@ impl fmt::Display for RuleId {
 }
 
 #[derive(Debug)]
-pub struct Issue {
-    pub rule: RuleId,
-    pub line: usize,
-    pub message: String,
-    pub severity: Severity,
+pub (crate) struct Issue {
+    pub (crate) rule: RuleId,
+    pub (crate) line: usize,
+    pub (crate) message: String,
+    pub (crate) severity: Severity,
 }
 
 #[cfg(test)]

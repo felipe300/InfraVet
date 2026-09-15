@@ -7,7 +7,7 @@ use crate::analyzers::dockerfile::parser::analyze_dockerfile;
 use crate::models::FileType;
 use crate::utils::output;
 
-pub fn scan(file_type: FileType) -> Result<()> {
+pub (crate) fn scan(file_type: FileType) -> Result<()> {
     let current_dir = env::current_dir()?;
 
     let target_name = match file_type {

@@ -11,7 +11,7 @@ fn offset_to_line(content: &str, offset: usize) -> usize {
     content[..offset.min(content.len())].lines().count().max(1)
 }
 
-pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
+pub (crate) fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
     let content = fs::read_to_string(path)
         .with_context(|| format!("Unable to read file: {}", path.display()))?;
 
