@@ -99,7 +99,7 @@ mod tests {
     }
 
     #[test]
-    fn test_detects_sensitive_keyword_case_insensitive_arg() {
+    fn test_detects_sensitive_keyword_case_insensitive_in_arg() {
         let content = "ARG api_key=test";
         let dockerfile = Dockerfile::parse(content).unwrap();
         let issue = DF009.check(&dockerfile.instructions[0], content, 1);
