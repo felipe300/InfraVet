@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::{
     models::{RuleDefinition, RulesConfig},
-    utils::output,
+    reports::output,
 };
 
 const RULES_JSON: &str = include_str!("../../docs/rules.json");

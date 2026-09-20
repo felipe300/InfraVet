@@ -1,17 +1,18 @@
 use anyhow::Result;
 use clap::Parser;
 
-use crate::cli::Commands;
+use crate::{cli::Commands, reports::scan};
 
 mod analyzers;
 mod cli;
 mod commands;
 mod core;
 mod models;
+mod reports;
 mod utils;
 
 use cli::Args;
-use commands::{rules, scan};
+use commands::rules;
 
 fn main() -> Result<()> {
     let args = Args::parse();

@@ -42,7 +42,7 @@ pub(crate) enum Commands {
 
         /// Output format for results
         #[arg(
-            short = 'r',
+            short = 'f',
             long = "format",
             alias = "output",
             value_enum,

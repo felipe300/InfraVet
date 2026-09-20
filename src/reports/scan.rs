@@ -4,8 +4,9 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use crate::analyzers::dockerfile::parser::analyze_dockerfile;
-use crate::models::{FileType, OutputFormat};
-use crate::utils::output::{self, ReportedIssue};
+use crate::models::{FileType, OutputFormat, ReportedIssue};
+use crate::reports::formatters::render_reports;
+use crate::reports::output;
 
 pub(crate) fn scan(file_type: FileType, format: OutputFormat) -> Result<()> {
     let current_dir = env::current_dir()?;
@@ -35,7 +36,7 @@ pub(crate) fn scan(file_type: FileType, format: OutputFormat) -> Result<()> {
         if is_cli {
             output::error(&format!("No files matching '{}' were found.", target_name));
         } else {
-            output::print_formatted_issues(&[], &format)?;
+            render_reports(&[], &format)?;
         }
         return Ok(());
     }
@@ -96,7 +97,7 @@ pub(crate) fn scan(file_type: FileType, format: OutputFormat) -> Result<()> {
     }
 
     if !is_cli {
-        output::print_formatted_issues(&all_issues, &format)?;
+        render_reports(&all_issues, &format)?;
     }
 
     Ok(())

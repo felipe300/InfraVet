@@ -69,3 +69,12 @@ pub(crate) struct RuleDefinition {
 pub(crate) struct Example {
     pub(crate) code: String,
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct ReportedIssue {
+    pub(crate) file_path: String,
+    pub(crate) severity: Severity,
+    pub(crate) rule: String,
+    pub(crate) line: usize,
+    pub(crate) message: String,
+}
