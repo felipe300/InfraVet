@@ -1,4 +1,5 @@
 use crate::models::FileType;
+use crate::models::OutputFormat;
 
 use clap::{
     Parser, Subcommand,
@@ -19,13 +20,13 @@ fn cli_styles() -> Styles {
     about = "CLI tool to analyze DevOps Infrastructure",
     styles = cli_styles()
 )]
-pub (crate) struct Args {
+pub(crate) struct Args {
     #[command(subcommand)]
-    pub (crate) command: Commands,
+    pub(crate) command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
-pub (crate) enum Commands {
+pub(crate) enum Commands {
     /// Scan infrastructure files recursively.
     ///
     /// Example: `infra_vet scan --type dockerfile`
@@ -38,6 +39,16 @@ pub (crate) enum Commands {
             default_value_t = FileType::Dockerfile
         )]
         file_type: FileType,
+
+        /// Output format for results
+        #[arg(
+            short = 'r',
+            long = "format",
+            alias = "output",
+            value_enum,
+            default_value_t = OutputFormat::Cli
+        )]
+        format: OutputFormat,
     },
     /// List of current rules per DevOps tools
     Rules,
@@ -53,7 +64,7 @@ mod tests {
         let args = Args::try_parse_from(["infravet", "scan"]).unwrap();
 
         match args.command {
-            Commands::Scan { file_type } => {
+            Commands::Scan { file_type, format } => {
                 assert_eq!(file_type, FileType::Dockerfile);
             }
             Commands::Rules => {
@@ -67,7 +78,7 @@ mod tests {
         let args = Args::try_parse_from(["infra_vet", "scan", "-t", "dockerfile"]).unwrap();
 
         match args.command {
-            Commands::Scan { file_type } => {
+            Commands::Scan { file_type, format } => {
                 assert_eq!(file_type, FileType::Dockerfile);
             }
             Commands::Rules => {
@@ -85,7 +96,7 @@ mod tests {
         let args = Args::try_parse_from(["infra_vet", "scan", "-t", "compose"]).unwrap();
 
         match args.command {
-            Commands::Scan { file_type } => {
+            Commands::Scan { file_type, format } => {
                 assert_eq!(file_type, FileType::Compose);
             }
             Commands::Rules => {
@@ -99,7 +110,7 @@ mod tests {
         let args = Args::try_parse_from(["infra_vet", "scan", "--type", "dockerfile"]).unwrap();
 
         match args.command {
-            Commands::Scan { file_type } => {
+            Commands::Scan { file_type, format } => {
                 assert_eq!(file_type, FileType::Dockerfile);
             }
             Commands::Rules => {

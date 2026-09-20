@@ -1,5 +1,25 @@
 use clap::ValueEnum;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum OutputFormat {
+    #[default]
+    #[value(name = "cli")]
+    Cli,
+    #[value(name = "json")]
+    Json,
+    #[value(name = "markdown")]
+    Markdown,
+    #[value(name = "html")]
+    Html,
+    #[value(name = "csv")]
+    Csv,
+    #[value(name = "junit")]
+    Junit,
+    #[value(name = "sarif")]
+    Sarif,
+}
 
 #[derive(Debug, Clone, ValueEnum, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -20,7 +40,7 @@ pub(crate) enum FileType {
     Ansible,
 }
 
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub(crate) enum Severity {
     Error,

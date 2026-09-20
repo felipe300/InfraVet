@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Commands::Scan { file_type } => scan(file_type)?,
+        Commands::Scan { file_type, format } => scan(file_type, format)?,
         Commands::Rules => rules()?,
     }
 
