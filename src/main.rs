@@ -18,7 +18,23 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Commands::Scan { file_type, format } => scan(file_type, format)?,
+        Commands::Scan {
+            file_type,
+            dockerfile,
+            compose,
+            terraform,
+            kubernetes,
+            ansible,
+            format,
+            output: _,
+            path: _,
+        } => {
+            let targets = Commands::resolve_targets(
+                file_type, dockerfile, compose, terraform, kubernetes, ansible,
+            );
+
+            scan(&targets, format)?;
+        }
         Commands::Rules => rules()?,
     }
 

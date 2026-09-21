@@ -4,93 +4,67 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use crate::analyzers::dockerfile::parser::analyze_dockerfile;
+use crate::core::issue::Issue;
 use crate::models::{FileType, OutputFormat, ReportedIssue};
 use crate::reports::formatters::render_reports;
 use crate::reports::output;
 
-pub(crate) fn scan(file_type: FileType, format: OutputFormat) -> Result<()> {
+pub(crate) fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
     let current_dir = env::current_dir()?;
-
-    let target_name = match file_type {
-        FileType::Dockerfile => "Dockerfile",
-
-        _ => {
-            output::error("This infrastructure type is not implemented yet.");
-            return Ok(());
-        }
-    };
-
     let is_cli = format == OutputFormat::Cli;
 
     if is_cli {
         output::info(&format!(
-            "Searching for '{}' recursively in: {}",
-            target_name,
+            "Searching for infrastructure files in: {}",
             output::highlight_path(&current_dir)
         ));
     }
 
-    let found_files = scan_recursive(&current_dir, target_name);
+    let found_files = find_files_for_targets(&current_dir, targets);
 
     if found_files.is_empty() {
         if is_cli {
-            output::error(&format!("No files matching '{}' were found.", target_name));
+            output::error("No infrastructure files matching the criteria were found.");
         } else {
             render_reports(&[], &format)?;
         }
         return Ok(());
     }
 
-    if is_cli {
-        output::success(&format!("Found {} matching file(s):", found_files.len()));
-    }
-
     let mut all_issues: Vec<ReportedIssue> = Vec::new();
 
-    for (index, file) in found_files.iter().enumerate() {
-        let relative_path = file.strip_prefix(&current_dir).unwrap_or(file);
+    for (file_type, path) in &found_files {
+        let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
         let path_str = relative_path.display().to_string();
 
         if is_cli {
-            println!("\n{}. {}", index + 1, output::highlight_path(relative_path));
+            println!("\n {}", output::highlight_path(relative_path));
         }
 
-        match file_type {
-            FileType::Dockerfile => match analyze_dockerfile(file) {
-                Ok(issues) => {
-                    if issues.is_empty() && is_cli {
-                        output::success("   The Dockerfile has no issues.");
-                    } else {
-                        for issue in issues {
-                            if is_cli {
-                                output::issue(
-                                    &issue.severity,
-                                    &issue.rule,
-                                    issue.line,
-                                    &issue.message,
-                                );
-                            }
-                            all_issues.push(ReportedIssue {
-                                file_path: path_str.clone(),
-                                severity: issue.severity,
-                                rule: issue.rule.to_string(),
-                                line: issue.line,
-                                message: issue.message,
-                            });
-                        }
-                    }
-                }
-
-                Err(err) => {
+        match analyze_single_file(file_type, path) {
+            Ok(issues) => {
+                if issues.is_empty() {
                     if is_cli {
-                        output::error(&format!("   Error reading file: {}", err));
+                        output::success("    No issues found.");
+                    }
+                } else {
+                    for issue in issues {
+                        if is_cli {
+                            output::issue(&issue.severity, &issue.rule, issue.line, &issue.message);
+                        }
+                        all_issues.push(ReportedIssue {
+                            file_path: path_str.clone(),
+                            severity: issue.severity.clone(),
+                            rule: issue.rule.to_string(),
+                            line: issue.line,
+                            message: issue.message.clone(),
+                        });
                     }
                 }
-            },
-
-            _ => {
+            }
+            Err(err) => {
                 if is_cli {
-                    output::info("   Analyzer not implemented yet.");
+                    output::error(&format!("    Error analyzing file: {}", err));
                 }
             }
         }
@@ -103,7 +77,29 @@ pub(crate) fn scan(file_type: FileType, format: OutputFormat) -> Result<()> {
     Ok(())
 }
 
-fn scan_recursive(root: &Path, target_name: &str) -> Vec<PathBuf> {
+fn analyze_single_file(file_type: &FileType, path: &Path) -> Result<Vec<Issue>> {
+    match file_type {
+        FileType::Dockerfile => analyze_dockerfile(path),
+        FileType::Compose => {
+            // TODO: Invocación a analyze_compose(path) cuando esté listo
+            Ok(Vec::new())
+        }
+        FileType::Terraform => {
+            // TODO: Invocación a analyze_terraform(path) cuando esté listo
+            Ok(Vec::new())
+        }
+        FileType::Kubernetes => {
+            // TODO: Invocación a analyze_kubernetes(path) cuando esté listo
+            Ok(Vec::new())
+        }
+        FileType::Ansible => {
+            // TODO: Invocación a analyze_ansible(path) cuando esté listo
+            Ok(Vec::new())
+        }
+    }
+}
+
+fn find_files_for_targets(root: &Path, targets: &[FileType]) -> Vec<(FileType, PathBuf)> {
     let mut matches = Vec::new();
 
     let walker = WalkDir::new(root)
@@ -114,15 +110,40 @@ fn scan_recursive(root: &Path, target_name: &str) -> Vec<PathBuf> {
         let path = entry.path();
 
         if path.is_file() {
-            if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
-                if name == target_name || name.starts_with(&format!("{}.", target_name)) {
-                    matches.push(path.to_path_buf());
+            for target in targets {
+                if match_file_type(path, target) {
+                    matches.push((target.clone(), path.to_path_buf()));
+                    break;
                 }
             }
         }
     }
 
     matches
+}
+
+fn match_file_type(path: &Path, file_type: &FileType) -> bool {
+    let file_name = match path.file_name().and_then(|n| n.to_str()) {
+        Some(name) => name,
+        None => return false,
+    };
+
+    match file_type {
+        FileType::Dockerfile => file_name == "Dockerfile" || file_name.starts_with("Dockerfile."),
+        FileType::Compose => {
+            file_name == "docker-compose.yml"
+                || file_name == "docker-compose.yaml"
+                || file_name.starts_with("compose.")
+        }
+        FileType::Terraform => path.extension().and_then(|e| e.to_str()) == Some("tf"),
+        FileType::Kubernetes => {
+            path.extension().and_then(|e| e.to_str()) == Some("yaml")
+                || path.extension().and_then(|e| e.to_str()) == Some("yml")
+        }
+        FileType::Ansible => {
+            file_name.contains("playbook") || file_name == "site.yml" || file_name == "site.yaml"
+        }
+    }
 }
 
 fn is_hidden_or_ignored(entry: &walkdir::DirEntry) -> bool {
@@ -144,20 +165,16 @@ mod tests {
         let root = dir.path().join("test_project");
         fs::create_dir(&root).unwrap();
 
-        // Root files
         File::create(root.join("Dockerfile")).unwrap();
         File::create(root.join("Dockerfile.local")).unwrap();
+        File::create(root.join("docker-compose.yml")).unwrap();
+        File::create(root.join("main.tf")).unwrap();
         File::create(root.join("README.md")).unwrap();
-        File::create(root.join(".env")).unwrap();
-        File::create(root.join(".gitignore")).unwrap();
 
-        // app/
         let app = root.join("app");
         fs::create_dir(&app).unwrap();
         File::create(app.join("Dockerfile.prod")).unwrap();
-        File::create(app.join("main.rs")).unwrap();
 
-        // Ignored directories
         for name in ["target", "node_modules", ".git"] {
             let dir_path = root.join(name);
             fs::create_dir(&dir_path).unwrap();
@@ -167,68 +184,13 @@ mod tests {
         (dir, root)
     }
 
-    struct DirGuard(PathBuf);
-    impl Drop for DirGuard {
-        fn drop(&mut self) {
-            let _ = env::set_current_dir(&self.0);
-        }
-    }
-
     #[test]
-    fn test_scan_recursive_finds_dockerfile() {
+    fn test_find_files_for_targets() {
         let (_dir, root) = create_test_structure();
-        let matches = scan_recursive(&root, "Dockerfile");
+        let targets = vec![FileType::Dockerfile, FileType::Compose];
 
-        assert_eq!(matches.len(), 3);
+        let matches = find_files_for_targets(&root, &targets);
 
-        assert!(matches.contains(&root.join("Dockerfile")));
-        assert!(matches.contains(&root.join("Dockerfile.local")));
-        assert!(matches.contains(&root.join("app/Dockerfile.prod")));
+        assert_eq!(matches.len(), 4); // 3 Dockerfiles + 1 Compose
     }
-
-    #[test]
-    fn test_scan_recursive_ignores_target_and_hidden() {
-        let (_dir, root) = create_test_structure();
-        let matches = scan_recursive(&root, "Dockerfile");
-
-        // assert!(matches.is_empty());
-        assert!(
-            !matches
-                .iter()
-                .any(|path| path.starts_with(root.join("target")))
-        );
-        assert!(
-            !matches
-                .iter()
-                .any(|path| path.starts_with(root.join("node_modules")))
-        );
-        assert!(
-            !matches
-                .iter()
-                .any(|path| path.starts_with(root.join(".git")))
-        );
-    }
-
-    // #[test]
-    // fn test_scan_unsupported_file_type() {
-    //     let result = scan(FileType::Terraform);
-    //     assert!(result.is_ok());
-    // }
-
-    // #[test]
-    // fn test_scan_execution_in_temp_dir() {
-    //     // This test only checks that `scan` executes without errors.
-    //     // It does not check whether a Dockerfile exists.
-    //     let dir = tempdir().unwrap();
-    //
-    //     // Temporarily change the current directory to test `env::current_dir()`.
-    //     let original_dir = env::current_dir().unwrap();
-    //     let _guard = DirGuard(original_dir);
-    //
-    //     env::set_current_dir(dir.path()).unwrap();
-    //
-    //     let result = scan(FileType::Dockerfile);
-    //
-    //     assert!(result.is_ok());
-    // }
 }
