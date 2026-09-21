@@ -191,6 +191,6 @@ mod tests {
 
         let matches = find_files_for_targets(&root, &targets);
 
-        assert_eq!(matches.len(), 4); // 3 Dockerfiles + 1 Compose
+        assert_eq!(matches.len(), 4);
     }
 }
