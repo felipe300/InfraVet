@@ -126,7 +126,6 @@ mod tests {
 
         assert_eq!(results.as_array().unwrap().len(), 3);
 
-        // DF001: Error -> "error"
         assert_eq!(results[0]["level"], "error");
         assert_eq!(results[0]["ruleId"], "DF001");
         assert_eq!(results[0]["message"]["text"], "Missing FROM instruction");
@@ -139,11 +138,9 @@ mod tests {
             1
         );
 
-        // DF004: Warning -> "warning"
         assert_eq!(results[1]["level"], "warning");
         assert_eq!(results[1]["ruleId"], "DF004");
 
-        // DF003: Info -> "info"
         assert_eq!(results[2]["level"], "info");
         assert_eq!(results[2]["ruleId"], "DF003");
     }
