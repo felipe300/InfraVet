@@ -6,19 +6,19 @@ use crate::{
     models::{FileType, RuleDefinition, Severity},
 };
 
-pub(crate) fn success(message: &str) {
+pub fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
 }
 
-pub(crate) fn error(message: &str) {
+pub fn error(message: &str) {
     eprintln!("{} {}", "✖".red().bold(), message.red());
 }
 
-pub(crate) fn info(message: &str) {
+pub fn info(message: &str) {
     println!("{} {}", "ℹ".cyan().bold(), message);
 }
 
-pub(crate) fn issue(severity: &Severity, rule: &RuleId, line: usize, message: &str) {
+pub fn issue(severity: &Severity, rule: &RuleId, line: usize, message: &str) {
     let (symbol, label) = match severity {
         Severity::Error => ("✗".red().bold(), "ERROR".red().bold()),
         Severity::Warning => ("⚠".yellow().bold(), "WARNING".yellow().bold()),
@@ -27,17 +27,14 @@ pub(crate) fn issue(severity: &Severity, rule: &RuleId, line: usize, message: &s
 
     let rule = rule.to_string().bright_magenta().bold();
 
-    println!(
-        "  {} {:<6} {:<8} [line {}] {}",
-        symbol, rule, label, line, message
-    );
+    println!("  {symbol} {rule:<6} {label:<8} [line {line}] {message}");
 }
 
-pub(crate) fn highlight_path(path: &Path) -> String {
+pub fn highlight_path(path: &Path) -> String {
     path.display().to_string().cyan().to_string()
 }
 
-pub(crate) fn rules(rules: &[RuleDefinition]) {
+pub fn rules(rules: &[RuleDefinition]) {
     println!();
     println!("{}", "Implemented Rules".green().bold());
     println!();
@@ -100,7 +97,7 @@ fn rule_definition(rule: &RuleDefinition) {
     println!("    {}", "Example:".blue().bold());
 
     for line in rule.example.code.lines() {
-        println!("    {}", line);
+        println!("    {line}");
     }
 
     println!();

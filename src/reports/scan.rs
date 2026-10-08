@@ -9,7 +9,7 @@ use crate::models::{FileType, OutputFormat, ReportedIssue};
 use crate::reports::formatters::render_reports;
 use crate::reports::output;
 
-pub(crate) fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
+pub fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
     let current_dir = env::current_dir()?;
     let is_cli = format == OutputFormat::Cli;
 
@@ -64,7 +64,7 @@ pub(crate) fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
             }
             Err(err) => {
                 if is_cli {
-                    output::error(&format!("    Error analyzing file: {}", err));
+                    output::error(&format!("    Error analyzing file: {err}"));
                 }
             }
         }
@@ -106,13 +106,13 @@ fn find_files_for_targets(root: &Path, targets: &[FileType]) -> Vec<(FileType, P
         .into_iter()
         .filter_entry(|entry| !is_hidden_or_ignored(entry));
 
-    for entry in walker.filter_map(|entry| entry.ok()) {
+    for entry in walker.filter_map(Result::ok) {
         let path = entry.path();
 
         if path.is_file() {
             for target in targets {
                 if match_file_type(path, target) {
-                    matches.push((target.clone(), path.to_path_buf()));
+                    matches.push((*target, path.to_path_buf()));
                     break;
                 }
             }
@@ -123,9 +123,8 @@ fn find_files_for_targets(root: &Path, targets: &[FileType]) -> Vec<(FileType, P
 }
 
 fn match_file_type(path: &Path, file_type: &FileType) -> bool {
-    let file_name = match path.file_name().and_then(|n| n.to_str()) {
-        Some(name) => name,
-        None => return false,
+    let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
+        return false;
     };
 
     match file_type {
@@ -150,8 +149,7 @@ fn is_hidden_or_ignored(entry: &walkdir::DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .map(|name| name.starts_with('.') || name == "target" || name == "node_modules")
-        .unwrap_or(false)
+        .is_some_and(|name| name.starts_with('.') || name == "target" || name == "node_modules")
 }
 
 #[cfg(test)]
