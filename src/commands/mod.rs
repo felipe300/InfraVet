@@ -1,3 +1,3 @@
-pub(crate) mod rules;
+pub mod rules;
 
-pub(crate) use rules::rules;
+pub use rules::rules;

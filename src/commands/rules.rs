@@ -13,7 +13,7 @@ fn get_rules() -> Result<Vec<RuleDefinition>> {
     Ok(config.rules)
 }
 
-pub(crate) fn rules() -> Result<()> {
+pub fn rules() -> Result<()> {
     let rules = get_rules()?;
 
     output::rules(&rules);
