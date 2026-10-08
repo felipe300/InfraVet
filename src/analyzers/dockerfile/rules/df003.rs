@@ -1,7 +1,7 @@
 use crate::core::issue::{Issue, RuleId};
 use crate::core::rule::DockerfileRule;
 use crate::models::Severity;
-use crate::utils::utils::uses_latest_tag;
+use crate::utils::helpers::uses_latest_tag;
 use dockerfile_parser::Instruction;
 
 pub(crate) struct DF003;

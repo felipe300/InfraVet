@@ -10,7 +10,7 @@ use anyhow::Result;
 use crate::models::{OutputFormat, ReportedIssue};
 
 pub(crate) fn render_reports(issues: &[ReportedIssue], format: &OutputFormat) -> Result<()> {
-    let content = match format {
+    match format {
         OutputFormat::Json => json::json_render(issues)?,
         OutputFormat::Markdown => markdown::markdown_render(issues)?,
         OutputFormat::Html => html::html_render(issues)?,
@@ -20,7 +20,7 @@ pub(crate) fn render_reports(issues: &[ReportedIssue], format: &OutputFormat) ->
         OutputFormat::Cli => unreachable!("CLI format does not produce a report string"),
     };
 
-    Ok(content)
+    Ok(())
 }
 
 #[cfg(test)]

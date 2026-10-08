@@ -21,7 +21,7 @@ pub(crate) fn json_content(issues: &[ReportedIssue]) -> serde_json::Value {
 }
 
 pub(crate) fn json_render(issues: &[ReportedIssue]) -> Result<()> {
-    let json_report = json_content(&issues);
+    let json_report = json_content(issues);
     println!("{}", serde_json::to_string_pretty(&json_report)?);
     Ok(())
 }
