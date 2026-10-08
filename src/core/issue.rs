@@ -3,7 +3,7 @@ use std::fmt;
 use crate::models::Severity;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct RuleId(String);
+pub struct RuleId(String);
 
 impl RuleId {
     pub(crate) fn new(id: impl Into<String>) -> Self {
@@ -18,7 +18,7 @@ impl fmt::Display for RuleId {
 }
 
 #[derive(Debug)]
-pub(crate) struct Issue {
+pub struct Issue {
     pub(crate) rule: RuleId,
     pub(crate) line: usize,
     pub(crate) message: String,
