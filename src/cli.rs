@@ -21,13 +21,13 @@ fn cli_styles() -> Styles {
     about = "CLI tool to analyze DevOps Infrastructure",
     styles = cli_styles()
 )]
-pub(crate) struct Args {
+pub struct Args {
     #[command(subcommand)]
     pub(crate) command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
-pub(crate) enum Commands {
+pub enum Commands {
     /// Scan infrastructure files recursively.
     ///
     /// Examples:
@@ -88,7 +88,7 @@ pub(crate) enum Commands {
 }
 
 impl Commands {
-    pub(crate) fn resolve_targets(
+    pub fn resolve_targets(
         file_type: Option<FileType>,
         dockerfile: bool,
         compose: bool,

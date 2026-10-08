@@ -1,16 +1,15 @@
-pub (crate) fn uses_latest_tag(from_str: &str) -> bool {
+pub fn uses_latest_tag(from_str: &str) -> bool {
     let mut parts = from_str.split_whitespace().skip(1);
 
-    let image_token = match parts.find(|part| !part.starts_with("--")) {
-        Some(token) => token,
-        None => return false,
-    };
-
-    if image_token.contains("@") {
+    let Some(image_token) = parts.find(|part| !part.starts_with("--")) else {
         return false;
     };
 
-    if let Some((_, tag)) = image_token.rsplit_once(":") {
+    if image_token.contains('@') {
+        return false;
+    }
+
+    if let Some((_, tag)) = image_token.rsplit_once(':') {
         tag == "latest"
     } else {
         true

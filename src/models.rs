@@ -1,9 +1,9 @@
 use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize, Eq, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum OutputFormat {
+pub enum OutputFormat {
     #[default]
     #[value(name = "cli")]
     Cli,
@@ -21,9 +21,9 @@ pub(crate) enum OutputFormat {
     Sarif,
 }
 
-#[derive(Debug, Clone, ValueEnum, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, ValueEnum, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum FileType {
+pub enum FileType {
     #[value(name = "dockerfile")]
     Dockerfile,
 
@@ -42,19 +42,19 @@ pub(crate) enum FileType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-pub(crate) enum Severity {
+pub enum Severity {
     Error,
     Warning,
     Info,
 }
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct RulesConfig {
+pub struct RulesConfig {
     pub(crate) rules: Vec<RuleDefinition>,
 }
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct RuleDefinition {
+pub struct RuleDefinition {
     pub(crate) code: String,
     pub(crate) file_type: FileType,
     pub(crate) category: String,
@@ -66,7 +66,7 @@ pub(crate) struct RuleDefinition {
 }
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct Example {
+pub struct Example {
     pub(crate) code: String,
 }
 
