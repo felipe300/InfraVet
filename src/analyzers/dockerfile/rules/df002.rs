@@ -3,21 +3,22 @@ use crate::core::rule::DockerfileRule;
 use crate::models::Severity;
 use dockerfile_parser::Instruction;
 
-pub(crate) struct DF002;
+pub struct DF002;
 
 impl DockerfileRule for DF002 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {
         if let Instruction::Copy(copy) = instruction {
             let span = copy.span;
-            let copy_str = &content[span.start..span.end];
 
-            if copy_str.contains(". .") {
+            if let Some(copy_str) = content.get(span.start..span.end)
+                && copy_str.contains(". .")
+            {
                 return Some(Issue {
-                    rule: RuleId::new("DF002"),
-                    line,
-                    message: "COPY . . copies the entire build context. Consider copying only the required files or directories.".into(),
-                    severity: Severity::Warning,
-                });
+                        rule: RuleId::new("DF002"),
+                        line,
+                        message: "COPY . . copies the entire build context. Consider copying only the required files or directories.".into(),
+                        severity: Severity::Warning,
+                    });
             }
         }
         None

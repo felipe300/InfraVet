@@ -4,15 +4,15 @@ use crate::models::Severity;
 use crate::utils::helpers::uses_latest_tag;
 use dockerfile_parser::Instruction;
 
-pub(crate) struct DF003;
+pub struct DF003;
 
 impl DockerfileRule for DF003 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {
         if let Instruction::From(from) = instruction {
             let span = from.span;
-            let from_str = &content[span.start..span.end];
-
-            if uses_latest_tag(from_str) {
+            if let Some(from_str) = content.get(span.start..span.end)
+                && uses_latest_tag(from_str)
+            {
                 return Some(Issue {
                     rule: RuleId::new("DF003"),
                     line,

@@ -2,7 +2,7 @@ use crate::analyzers::dockerfile::context::AnalysisContext;
 use crate::core::issue::{Issue, RuleId};
 use crate::models::Severity;
 
-pub(crate) struct DF004;
+pub struct DF004;
 
 impl DF004 {
     pub(crate) fn check(ctx: &AnalysisContext) -> Option<Issue> {

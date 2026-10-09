@@ -3,15 +3,16 @@ use crate::core::rule::DockerfileRule;
 use crate::models::Severity;
 use dockerfile_parser::Instruction;
 
-pub(crate) struct DF005;
+pub struct DF005;
 
 impl DockerfileRule for DF005 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {
         if let Instruction::Run(run) = instruction {
             let span = run.span;
-            let command = &content[span.start..span.end];
-
-            if command.contains("apt-get update") && !command.contains("apt-get install") {
+            if let Some(command) = content.get(span.start..span.end)
+                && command.contains("apt-get update")
+                && !command.contains("apt-get install")
+            {
                 return Some(Issue {
                     rule: RuleId::new("DF005"),
                     line,

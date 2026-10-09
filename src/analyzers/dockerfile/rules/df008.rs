@@ -3,7 +3,7 @@ use crate::core::rule::DockerfileRule;
 use crate::models::Severity;
 use dockerfile_parser::Instruction;
 
-pub(crate) struct DF008;
+pub struct DF008;
 
 impl DockerfileRule for DF008 {
     fn check(&self, instruction: &Instruction, content: &str, line: usize) -> Option<Issue> {
@@ -15,8 +15,8 @@ impl DockerfileRule for DF008 {
             }
 
             let span = misc.span;
-            let add_str = &content[span.start..span.end];
-            let mut parts = add_str.split_whitespace();
+            let add_str = content.get(span.start..span.end);
+            let mut parts = add_str?.split_whitespace();
 
             parts.next();
 
@@ -24,10 +24,12 @@ impl DockerfileRule for DF008 {
 
             let is_remote_or = source.contains("http://") || source.contains("https://");
 
-            let is_archive = source.ends_with(".tar")
-                || source.ends_with(".tar.gz")
-                || source.ends_with(".tgz")
-                || source.ends_with(".zip");
+            let is_archive = std::path::Path::new(source).extension().is_some_and(|ext| {
+                ext.eq_ignore_ascii_case(".tar")
+                    || ext.eq_ignore_ascii_case(".tar.gz")
+                    || ext.eq_ignore_ascii_case(".tgz")
+                    || ext.eq_ignore_ascii_case(".zip")
+            });
 
             if !is_remote_or && !is_archive {
                 return Some(Issue {

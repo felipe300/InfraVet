@@ -3,7 +3,7 @@ use crate::core::rule::DockerfileRule;
 use crate::models::Severity;
 use dockerfile_parser::Instruction;
 
-pub(crate) struct DF009;
+pub struct DF009;
 
 // Keywords to search
 const SENSITIVE_KEYWORDS: &[&str] = &[
@@ -28,8 +28,8 @@ impl DockerfileRule for DF009 {
             _ => return None,
         };
 
-        let command = &content[span.start..span.end];
-        let uppercase_command = command.to_uppercase();
+        let command = content.get(span.start..span.end);
+        let uppercase_command = command?.to_uppercase();
 
         for keyword in SENSITIVE_KEYWORDS {
             if uppercase_command.contains(keyword) {

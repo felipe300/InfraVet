@@ -3,7 +3,7 @@ use crate::{
     models::Severity,
 };
 
-pub(crate) struct DF006;
+pub struct DF006;
 
 impl DF006 {
     pub(crate) fn check(content: &str) -> Option<Issue> {

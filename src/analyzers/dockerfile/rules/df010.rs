@@ -8,7 +8,7 @@ use crate::{
     models::Severity,
 };
 
-pub(crate) struct DF010;
+pub struct DF010;
 
 impl DockerfileRule for DF010 {
     fn check(
@@ -19,39 +19,47 @@ impl DockerfileRule for DF010 {
     ) -> Option<crate::core::issue::Issue> {
         if let Instruction::Run(run) = instruction {
             let span = run.span;
-            let run_str = &content[span.start..span.end];
+            if let Some(run_str) = content.get(span.start..span.end) {
+                if is_apt_istalling(run_str) && !cleans_apt_cache(run_str) {
+                    return Some(Issue {
+                        rule: RuleId::new("DF010"),
+                        line,
+                        message: "Clean up apt caches after installation using 'rm -rf /var/lib/apt/lists/*' to reduce image size.".into(),
+                        severity: Severity::Warning,
+                    });
+                }
 
-            let has_apt_install = run_str.contains("apt-get install")
-                || run_str.contains("apt install")
-                || run_str.contains("apt get install");
-
-            let has_apt_cleanup = run_str.contains("/var/lib/apt/lists");
-
-            if has_apt_install && !has_apt_cleanup {
-                return Some(Issue {
-                    rule: RuleId::new("DF010"),
-                    line,
-                    message: "Clean up apt caches after installation using 'rm -rf /var/lib/apt/lists/*' to reduce image size.".into(),
-                    severity: Severity::Warning,
-                });
-            }
-
-            let has_apk_install = run_str.contains("apk add");
-            let has_apk_no_cache = run_str.contains("--no-cache");
-            let has_apk_cleanup = run_str.contains("/var/cache/apk");
-
-            if has_apk_install && !has_apk_no_cache && !has_apk_cleanup {
-                return Some(Issue {
+                if is_apk_installing(run_str) && !cleans_apk_cache(run_str) {
+                    return Some(Issue {
                     rule: RuleId::new("DF010"),
                     line,
                     message: "Use 'apk add --no-cache' or clean up '/var/cache/apk/*' to reduce image size.".into(),
                     severity: Severity::Warning,
                 });
+                }
             }
         }
 
         None
     }
+}
+
+fn is_apt_istalling(cmd: &str) -> bool {
+    cmd.contains("apt-get install")
+        || cmd.contains("apt install")
+        || cmd.contains("apt get install")
+}
+
+fn cleans_apt_cache(cmd: &str) -> bool {
+    cmd.contains("/var/lib/apt/lists/")
+}
+
+fn is_apk_installing(cmd: &str) -> bool {
+    cmd.contains("apk add")
+}
+
+fn cleans_apk_cache(cmd: &str) -> bool {
+    cmd.contains("--no-cache") || cmd.contains("/var/cache/apk")
 }
 
 #[cfg(test)]

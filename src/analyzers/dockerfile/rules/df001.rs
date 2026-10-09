@@ -2,19 +2,19 @@ use crate::analyzers::dockerfile::context::AnalysisContext;
 use crate::core::issue::{Issue, RuleId};
 use crate::models::Severity;
 
-pub(crate) struct DF001;
+pub struct DF001;
 
 impl DF001 {
     pub(crate) fn check(ctx: &AnalysisContext) -> Option<Issue> {
-        if !ctx.has_from {
+        if ctx.has_from {
+            None
+        } else {
             Some(Issue {
                 rule: RuleId::new("DF001"),
                 line: 1,
                 message: "Missing FROM instruction. A Dockerfile must define at least one build stage with FROM.".into(),
                 severity: Severity::Error,
             })
-        } else {
-            None
         }
     }
 }
