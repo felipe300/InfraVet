@@ -29,9 +29,8 @@ fn main() -> Result<()> {
             output: _,
             path: _,
         } => {
-            let targets = Commands::resolve_targets(
-                file_type, dockerfile, compose, terraform, kubernetes, ansible,
-            );
+            let flags = (dockerfile, compose, terraform, kubernetes, ansible);
+            let targets = Commands::resolve_targets(file_type, flags);
 
             scan(&targets, format)?;
         }

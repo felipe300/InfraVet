@@ -90,24 +90,26 @@ pub enum Commands {
 impl Commands {
     pub fn resolve_targets(
         file_type: Option<FileType>,
-        dockerfile: bool,
-        compose: bool,
-        terraform: bool,
-        kubernetes: bool,
-        ansible: bool,
+        flags: (bool, bool, bool, bool, bool),
     ) -> Vec<FileType> {
+        let (dockerfile, compose, terraform, kubernetes, ansible) = flags;
+
         if dockerfile {
             return vec![FileType::Dockerfile];
         }
+
         if compose {
             return vec![FileType::Compose];
         }
+
         if terraform {
             return vec![FileType::Terraform];
         }
+
         if kubernetes {
             return vec![FileType::Kubernetes];
         }
+
         if ansible {
             return vec![FileType::Ansible];
         }
@@ -157,7 +159,7 @@ mod tests {
                 assert_eq!(file_type, Some(FileType::Dockerfile));
             }
             Commands::Rules => panic!("Expected Scan command"),
-        };
+        }
     }
 
     #[test]
@@ -174,7 +176,7 @@ mod tests {
                 assert_eq!(file_type, None);
             }
             Commands::Rules => panic!("Expected Scan command"),
-        };
+        }
     }
 
     #[test]
@@ -194,7 +196,7 @@ mod tests {
                 assert_eq!(output, Some(PathBuf::from("report.json")));
             }
             Commands::Rules => panic!("Expected Scan command"),
-        };
+        }
     }
 
     #[test]

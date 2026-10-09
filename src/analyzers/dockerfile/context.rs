@@ -14,11 +14,11 @@ impl AnalysisContext {
     }
 
     /// Actualiza el contexto según la instrucción actual
-    pub fn update(&mut self, instruction: &Instruction) {
+    pub const fn update(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::From(_) => {
                 self.has_from = true;
-                self.stages_count += 1;
+                self.stages_count = self.stages_count.saturating_add(1);
                 self.user_in_current_stage = false;
             }
             Instruction::Misc(misc) => {

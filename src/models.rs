@@ -86,7 +86,7 @@ pub struct Example {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub(crate) struct ReportedIssue {
+pub struct ReportedIssue {
     pub(crate) file_path: String,
     pub(crate) severity: Severity,
     pub(crate) rule: String,
