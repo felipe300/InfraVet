@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::models::ReportedIssue;
 
-pub(crate) fn json_content(issues: &[ReportedIssue]) -> serde_json::Value {
+pub fn json_content(issues: &[ReportedIssue]) -> serde_json::Value {
     let results: Vec<serde_json::Value> = issues
         .iter()
         .map(|i| {
@@ -20,7 +20,7 @@ pub(crate) fn json_content(issues: &[ReportedIssue]) -> serde_json::Value {
     })
 }
 
-pub(crate) fn json_render(issues: &[ReportedIssue]) -> Result<()> {
+pub fn json_render(issues: &[ReportedIssue]) -> Result<()> {
     let json_report = json_content(issues);
     println!("{}", serde_json::to_string_pretty(&json_report)?);
     Ok(())
@@ -87,6 +87,6 @@ mod tests {
             "Missing FROM instruction",
         )];
 
-        assert!(json_render(&issues).is_ok())
+        assert!(json_render(&issues).is_ok());
     }
 }

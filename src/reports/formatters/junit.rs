@@ -11,7 +11,8 @@ fn xml_escape(input: &str) -> String {
         .replace('\'', "&apos;")
 }
 
-pub(crate) fn junit_render(issues: &[ReportedIssue]) -> Result<()> {
+#[allow(clippy::unnecessary_wraps)]
+pub fn junit_render(issues: &[ReportedIssue]) -> Result<()> {
     let errors = issues
         .iter()
         .filter(|i| i.severity == Severity::Error)
@@ -23,13 +24,9 @@ pub(crate) fn junit_render(issues: &[ReportedIssue]) -> Result<()> {
     let total = issues.len();
 
     println!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    println!("<testsuites tests=\"{total}\" failures=\"{warnings}\" errors=\"{errors}\">");
     println!(
-        "<testsuites tests=\"{}\" failures=\"{}\" errors=\"{}\">",
-        total, warnings, errors
-    );
-    println!(
-        "  <testsuite name=\"InfraVet Scan\" tests=\"{}\" failures=\"{}\" errors=\"{}\">",
-        total, warnings, errors
+        "  <testsuite name=\"InfraVet Scan\" tests=\"{total}\" failures=\"{warnings}\" errors=\"{errors}\">"
     );
 
     if issues.is_empty() {
@@ -56,7 +53,8 @@ pub(crate) fn junit_render(issues: &[ReportedIssue]) -> Result<()> {
                     xml_escape(&i.file_path)
                 ),
                 Severity::Info => {
-                    println!("      <system-out>{}</system-out>", xml_escape(&i.message))
+                    let xml_message = xml_escape(&i.message);
+                    println!("      <system-out>{xml_message}</system-out>");
                 }
             }
             println!("    </testcase>");

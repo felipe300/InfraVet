@@ -1,15 +1,15 @@
-pub(crate) mod csv;
-pub(crate) mod html;
-pub(crate) mod json;
-pub(crate) mod junit;
-pub(crate) mod markdown;
-pub(crate) mod sarif;
+pub mod csv;
+pub mod html;
+pub mod json;
+pub mod junit;
+pub mod markdown;
+pub mod sarif;
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 
 use crate::models::{OutputFormat, ReportedIssue};
 
-pub(crate) fn render_reports(issues: &[ReportedIssue], format: &OutputFormat) -> Result<()> {
+pub fn render_reports(issues: &[ReportedIssue], format: &OutputFormat) -> Result<()> {
     match format {
         OutputFormat::Json => json::json_render(issues)?,
         OutputFormat::Markdown => markdown::markdown_render(issues)?,
@@ -17,8 +17,8 @@ pub(crate) fn render_reports(issues: &[ReportedIssue], format: &OutputFormat) ->
         OutputFormat::Csv => csv::csv_render(issues)?,
         OutputFormat::Junit => junit::junit_render(issues)?,
         OutputFormat::Sarif => sarif::sarif_render(issues)?,
-        OutputFormat::Cli => unreachable!("CLI format does not produce a report string"),
-    };
+        OutputFormat::Cli => bail!("CLI format does not produce a report string"),
+    }
 
     Ok(())
 }
@@ -46,8 +46,7 @@ mod tests {
             let result = render_reports(&issues, format);
             assert!(
                 result.is_ok(),
-                "Error to render report for the format {:?}",
-                format
+                "Error to render report for the format {format}"
             );
         }
     }

@@ -2,7 +2,8 @@ use anyhow::Result;
 
 use crate::models::ReportedIssue;
 
-pub(crate) fn markdown_render(issues: &[ReportedIssue]) -> Result<()> {
+#[allow(clippy::unnecessary_wraps)]
+pub fn markdown_render(issues: &[ReportedIssue]) -> Result<()> {
     println!("# InfraVet Analysis Report\n");
     if issues.is_empty() {
         println!("No issues found.");

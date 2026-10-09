@@ -10,7 +10,8 @@ fn html_escape(input: &str) -> String {
         .replace('"', "&quot;")
 }
 
-pub(crate) fn html_render(issues: &[ReportedIssue]) -> Result<()> {
+#[allow(clippy::unnecessary_wraps)]
+pub fn html_render(issues: &[ReportedIssue]) -> Result<()> {
     {
         println!(
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>InfraVet Report</title>"
@@ -41,5 +42,6 @@ pub(crate) fn html_render(issues: &[ReportedIssue]) -> Result<()> {
         }
         println!("</body></html>");
     }
+
     Ok(())
 }

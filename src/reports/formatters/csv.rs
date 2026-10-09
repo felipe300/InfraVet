@@ -21,19 +21,16 @@ fn csv_content(issues: &[ReportedIssue]) -> String {
         let file_path = escape_csv_field(&i.file_path);
         let message = escape_csv_field(&i.message);
         let rule = escape_csv_field(&i.rule);
+        let get_line = i.line;
 
-        writeln!(
-            buffer,
-            "{},{},{},{},{}",
-            sev, rule, file_path, i.line, message
-        )
-        .unwrap();
+        let _ = writeln!(buffer, "{sev},{rule},{file_path},{get_line},{message}");
     }
 
     buffer
 }
 
-pub(crate) fn csv_render(issues: &[ReportedIssue]) -> Result<()> {
+#[allow(clippy::unnecessary_wraps)]
+pub fn csv_render(issues: &[ReportedIssue]) -> Result<()> {
     println!("{}", csv_content(issues));
     Ok(())
 }

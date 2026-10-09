@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::models::{ReportedIssue, Severity};
 
-pub(crate) fn sarif_content(issues: &[ReportedIssue]) -> serde_json::Value {
+pub fn sarif_content(issues: &[ReportedIssue]) -> serde_json::Value {
     let results: Vec<serde_json::Value> = issues
         .iter()
         .map(|i| {
@@ -50,7 +50,7 @@ pub(crate) fn sarif_content(issues: &[ReportedIssue]) -> serde_json::Value {
     })
 }
 
-pub(crate) fn sarif_render(issues: &[ReportedIssue]) -> Result<()> {
+pub fn sarif_render(issues: &[ReportedIssue]) -> Result<()> {
     let sarif_report = sarif_content(issues);
     println!("{}", serde_json::to_string_pretty(&sarif_report)?);
     Ok(())

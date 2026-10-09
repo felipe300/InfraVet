@@ -1,5 +1,20 @@
 use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+
+impl fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Cli => write!(f, "cli"),
+            Self::Json => write!(f, "json"),
+            Self::Markdown => write!(f, "markdown"),
+            Self::Html => write!(f, "html"),
+            Self::Csv => write!(f, "csv"),
+            Self::Junit => write!(f, "junit"),
+            Self::Sarif => write!(f, "sarif"),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize, Eq, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
