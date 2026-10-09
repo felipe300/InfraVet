@@ -7,11 +7,22 @@ use crate::analyzers::dockerfile::rules::{df006::DF006, df007::DF007};
 use crate::analyzers::dockerfile::rules::{execution_rules, instruction_rules};
 use crate::core::issue::Issue;
 
+#[allow(clippy::naive_bytecount)]
 fn offset_to_line(content: &str, offset: usize) -> usize {
-    content[..offset.min(content.len())].lines().count().max(1)
+    let limit = offset.min(content.len());
+
+    let lines = content
+        .as_bytes()
+        .get(..limit)
+        .unwrap_or(&[])
+        .iter()
+        .filter(|&&b| b == b'\n')
+        .count();
+
+    lines.saturating_add(1)
 }
 
-pub (crate) fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
+pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
     let content = fs::read_to_string(path)
         .with_context(|| format!("Unable to read file: {}", path.display()))?;
 

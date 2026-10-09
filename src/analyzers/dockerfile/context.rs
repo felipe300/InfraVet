@@ -1,20 +1,20 @@
 use dockerfile_parser::Instruction;
 
 #[derive(Debug, Default)]
-pub (crate) struct AnalysisContext {
-    pub (crate) has_from: bool,
-    pub (crate) stages_count: usize,
-    pub (crate) user_in_current_stage: bool,
-    pub (crate) has_healthcheck: bool,
+pub struct AnalysisContext {
+    pub(crate) has_from: bool,
+    pub(crate) stages_count: usize,
+    pub(crate) user_in_current_stage: bool,
+    pub(crate) has_healthcheck: bool,
 }
 
 impl AnalysisContext {
-    pub (crate) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
     /// Actualiza el contexto según la instrucción actual
-    pub (crate) fn update(&mut self, instruction: &Instruction) {
+    pub fn update(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::From(_) => {
                 self.has_from = true;
