@@ -55,7 +55,7 @@ pub fn rules(rules: &[RuleDefinition]) {
             continue;
         }
 
-        rule_file_type_handler(&file_type);
+        rule_file_type_handler(file_type);
 
         for rule in file_rules {
             rule_definition(rule);
@@ -63,7 +63,7 @@ pub fn rules(rules: &[RuleDefinition]) {
     }
 }
 
-fn rule_file_type_handler(file_type: &FileType) {
+fn rule_file_type_handler(file_type: FileType) {
     let title = match file_type {
         FileType::Dockerfile => "Dockerfile",
         FileType::Compose => "Compose",

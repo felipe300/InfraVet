@@ -9,7 +9,7 @@ use anyhow::{Result, bail};
 
 use crate::models::{OutputFormat, ReportedIssue};
 
-pub fn render_reports(issues: &[ReportedIssue], format: &OutputFormat) -> Result<()> {
+pub fn render_reports(issues: &[ReportedIssue], format: OutputFormat) -> Result<()> {
     match format {
         OutputFormat::Json => json::json_render(issues)?,
         OutputFormat::Markdown => markdown::markdown_render(issues)?,
@@ -43,7 +43,7 @@ mod tests {
         ];
 
         for format in &formats {
-            let result = render_reports(&issues, format);
+            let result = render_reports(&issues, *format);
             assert!(
                 result.is_ok(),
                 "Error to render report for the format {format}"
@@ -56,6 +56,6 @@ mod tests {
     fn test_render_reports_panics_on_cli_format() {
         let issues = mock_issues();
 
-        let _ = render_reports(&issues, &OutputFormat::Cli);
+        let _ = render_reports(&issues, OutputFormat::Cli);
     }
 }

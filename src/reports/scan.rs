@@ -26,7 +26,7 @@ pub fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
         if is_cli {
             output::error("No infrastructure files matching the criteria were found.");
         } else {
-            render_reports(&[], &format)?;
+            render_reports(&[], format)?;
         }
         return Ok(());
     }
@@ -41,7 +41,7 @@ pub fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
             println!("\n {}", output::highlight_path(relative_path));
         }
 
-        match analyze_single_file(file_type, path) {
+        match analyze_single_file(*file_type, path) {
             Ok(issues) => {
                 if issues.is_empty() {
                     if is_cli {
@@ -71,13 +71,13 @@ pub fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
     }
 
     if !is_cli {
-        render_reports(&all_issues, &format)?;
+        render_reports(&all_issues, format)?;
     }
 
     Ok(())
 }
 
-fn analyze_single_file(file_type: &FileType, path: &Path) -> Result<Vec<Issue>> {
+fn analyze_single_file(file_type: FileType, path: &Path) -> Result<Vec<Issue>> {
     match file_type {
         FileType::Dockerfile => analyze_dockerfile(path),
         FileType::Compose => {
@@ -111,7 +111,7 @@ fn find_files_for_targets(root: &Path, targets: &[FileType]) -> Vec<(FileType, P
 
         if path.is_file() {
             for target in targets {
-                if match_file_type(path, target) {
+                if match_file_type(path, *target) {
                     matches.push((*target, path.to_path_buf()));
                     break;
                 }
@@ -122,7 +122,7 @@ fn find_files_for_targets(root: &Path, targets: &[FileType]) -> Vec<(FileType, P
     matches
 }
 
-fn match_file_type(path: &Path, file_type: &FileType) -> bool {
+fn match_file_type(path: &Path, file_type: FileType) -> bool {
     let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
         return false;
     };
