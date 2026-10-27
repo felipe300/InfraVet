@@ -5,74 +5,113 @@ use walkdir::WalkDir;
 
 use crate::analyzers::dockerfile::parser::analyze_dockerfile;
 use crate::core::issue::Issue;
-use crate::models::{FileType, OutputFormat, ReportedIssue};
+use crate::models::{FileType, OutputFormat, ReportedIssue, ScanSummary};
 use crate::reports::formatters::render_reports;
 use crate::reports::output;
 
+// pub fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
+//     let current_dir = env::current_dir()?;
+//     let is_cli = format == OutputFormat::Cli;
+//
+//     if is_cli {
+//         output::info(&format!(
+//             "Searching for infrastructure files in: {}",
+//             output::highlight_path(&current_dir)
+//         ));
+//     }
+//
+//     let found_files = find_files_for_targets(&current_dir, targets);
+//
+//     if found_files.is_empty() {
+//         if is_cli {
+//             output::error("No infrastructure files matching the criteria were found.");
+//         } else {
+//             let summary = ScanSummary::new(0, &[]);
+//             render_reports(&[], &summary, format)?;
+//         }
+//         return Ok(());
+//     }
+//
+//     let mut all_issues: Vec<ReportedIssue> = Vec::new();
+//
+//     for (file_type, path) in &found_files {
+//         let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
+//         let path_str = relative_path.display().to_string();
+//
+//         if is_cli {
+//             println!("\n {}", output::highlight_path(relative_path));
+//         }
+//
+//         match analyze_single_file(*file_type, path) {
+//             Ok(issues) => {
+//                 if issues.is_empty() {
+//                     if is_cli {
+//                         output::success("    No issues found.");
+//                     }
+//                 } else {
+//                     for issue in issues {
+//                         if is_cli {
+//                             output::issue(&issue.severity, &issue.rule, issue.line, &issue.message);
+//                         }
+//                         all_issues.push(ReportedIssue {
+//                             file_path: path_str.clone(),
+//                             severity: issue.severity.clone(),
+//                             rule: issue.rule.to_string(),
+//                             line: issue.line,
+//                             message: issue.message.clone(),
+//                         });
+//                     }
+//                 }
+//             }
+//             Err(err) => {
+//                 if is_cli {
+//                     output::error(&format!("    Error analyzing file: {err}"));
+//                 }
+//             }
+//         }
+//     }
+//
+//     let summary = ScanSummary::new(found_files.len(), &all_issues);
+//     render_reports(&all_issues, &summary, format)?;
+//
+//     Ok(())
+// }
+
 pub fn scan(targets: &[FileType], format: OutputFormat) -> Result<()> {
     let current_dir = env::current_dir()?;
-    let is_cli = format == OutputFormat::Cli;
-
-    if is_cli {
-        output::info(&format!(
-            "Searching for infrastructure files in: {}",
-            output::highlight_path(&current_dir)
-        ));
-    }
 
     let found_files = find_files_for_targets(&current_dir, targets);
 
-    if found_files.is_empty() {
-        if is_cli {
-            output::error("No infrastructure files matching the criteria were found.");
-        } else {
-            render_reports(&[], format)?;
-        }
-        return Ok(());
-    }
-
     let mut all_issues: Vec<ReportedIssue> = Vec::new();
+    let mut files_scanned = 0;
 
     for (file_type, path) in &found_files {
         let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
         let path_str = relative_path.display().to_string();
 
-        if is_cli {
-            println!("\n {}", output::highlight_path(relative_path));
-        }
-
         match analyze_single_file(*file_type, path) {
             Ok(issues) => {
-                if issues.is_empty() {
-                    if is_cli {
-                        output::success("    No issues found.");
-                    }
-                } else {
-                    for issue in issues {
-                        if is_cli {
-                            output::issue(&issue.severity, &issue.rule, issue.line, &issue.message);
-                        }
-                        all_issues.push(ReportedIssue {
-                            file_path: path_str.clone(),
-                            severity: issue.severity.clone(),
-                            rule: issue.rule.to_string(),
-                            line: issue.line,
-                            message: issue.message.clone(),
-                        });
-                    }
+                files_scanned += 1;
+
+                for issue in issues {
+                    all_issues.push(ReportedIssue {
+                        file_path: path_str.clone(),
+                        severity: issue.severity.clone(),
+                        rule: issue.rule.to_string(),
+                        line: issue.line,
+                        message: issue.message.clone(),
+                    });
                 }
             }
             Err(err) => {
-                if is_cli {
-                    output::error(&format!("    Error analyzing file: {err}"));
-                }
+                output::error(&format!("Error analyzing {}: {err}", path.display()));
             }
         }
     }
 
-    if !is_cli {
-        render_reports(&all_issues, format)?;
-    }
+    let summary = ScanSummary::new(files_scanned, &all_issues);
+
+    render_reports(&all_issues, &summary, format)?;
 
     Ok(())
 }

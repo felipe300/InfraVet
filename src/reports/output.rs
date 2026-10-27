@@ -3,9 +3,10 @@ use std::path::Path;
 
 use crate::{
     core::issue::RuleId,
-    models::{FileType, RuleDefinition, Severity},
+    models::{FileType, RuleDefinition, ScanSummary, Severity},
 };
 
+#[expect(dead_code)]
 pub fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
 }
@@ -14,10 +15,12 @@ pub fn error(message: &str) {
     eprintln!("{} {}", "✖".red().bold(), message.red());
 }
 
+#[expect(dead_code)]
 pub fn info(message: &str) {
     println!("{} {}", "ℹ".cyan().bold(), message);
 }
 
+#[expect(dead_code)]
 pub fn issue(severity: &Severity, rule: &RuleId, line: usize, message: &str) {
     let (symbol, label) = match severity {
         Severity::Error => ("✗".red().bold(), "ERROR".red().bold()),
@@ -30,6 +33,7 @@ pub fn issue(severity: &Severity, rule: &RuleId, line: usize, message: &str) {
     println!("  {symbol} {rule:<6} {label:<8} [line {line}] {message}");
 }
 
+#[expect(dead_code)]
 pub fn highlight_path(path: &Path) -> String {
     path.display().to_string().cyan().to_string()
 }
@@ -102,5 +106,31 @@ fn rule_definition(rule: &RuleDefinition) {
 
     println!();
     println!("{}", "─".repeat(80).dimmed());
+    println!();
+}
+
+pub fn render_summary(summary: &ScanSummary) {
+    let separator = "━".repeat(42);
+
+    println!();
+    println!("{}", "INFRAVET · Infrastructure Analysis".green().bold());
+    println!("{}", separator.dimmed());
+
+    println!("{}", "GENERAL SCAN REPORT".bold());
+    println!();
+
+    println!("  Files scanned: {}", summary.files_scanned);
+    println!("  Total issues:  {}", summary.total_issues);
+
+    println!();
+    println!("{}", separator.dimmed());
+
+    println!("  {} {:<12} {}", "●".red(), "Errors", summary.errors);
+
+    println!("  {} {:<12} {}", "●".yellow(), "Warnings", summary.warnings);
+
+    println!("  {} {:<12} {}", "●".cyan(), "Info", summary.info);
+
+    println!("{}", separator.dimmed());
     println!();
 }

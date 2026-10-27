@@ -1,3 +1,4 @@
+pub mod cli;
 pub mod csv;
 pub mod html;
 pub mod json;
@@ -5,11 +6,15 @@ pub mod junit;
 pub mod markdown;
 pub mod sarif;
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 
-use crate::models::{OutputFormat, ReportedIssue};
+use crate::models::{OutputFormat, ReportedIssue, ScanSummary};
 
-pub fn render_reports(issues: &[ReportedIssue], format: OutputFormat) -> Result<()> {
+pub fn render_reports(
+    issues: &[ReportedIssue],
+    summary: &ScanSummary,
+    format: OutputFormat,
+) -> Result<()> {
     match format {
         OutputFormat::Json => json::json_render(issues)?,
         OutputFormat::Markdown => markdown::markdown_render(issues)?,
@@ -17,7 +22,8 @@ pub fn render_reports(issues: &[ReportedIssue], format: OutputFormat) -> Result<
         OutputFormat::Csv => csv::csv_render(issues)?,
         OutputFormat::Junit => junit::junit_render(issues)?,
         OutputFormat::Sarif => sarif::sarif_render(issues)?,
-        OutputFormat::Cli => bail!("CLI format does not produce a report string"),
+        // OutputFormat::Cli => bail!("CLI format does not produce a report string"),
+        OutputFormat::Cli => cli::cli_render(summary)?,
     }
 
     Ok(())
@@ -33,6 +39,7 @@ mod tests {
     #[test]
     fn test_render_reports_supports_all_export_formats() {
         let issues = mock_issues();
+        let summary = ScanSummary::new(0, &issues);
         let formats = [
             OutputFormat::Csv,
             OutputFormat::Html,
@@ -40,10 +47,11 @@ mod tests {
             OutputFormat::Junit,
             OutputFormat::Markdown,
             OutputFormat::Sarif,
+            OutputFormat::Cli,
         ];
 
         for format in &formats {
-            let result = render_reports(&issues, *format);
+            let result = render_reports(&issues, &summary, *format);
             assert!(
                 result.is_ok(),
                 "Error to render report for the format {format}"
@@ -51,11 +59,11 @@ mod tests {
         }
     }
 
-    #[test]
-    #[should_panic(expected = "CLI format does not produce a report string")]
-    fn test_render_reports_panics_on_cli_format() {
-        let issues = mock_issues();
-
-        let _ = render_reports(&issues, OutputFormat::Cli);
-    }
+    // #[test]
+    // #[should_panic(expected = "CLI format does not produce a report string")]
+    // fn test_render_reports_panics_on_cli_format() {
+    //     let issues = mock_issues();
+    //
+    //     let _ = render_reports(&issues, OutputFormat::Cli);
+    // }
 }

@@ -93,3 +93,32 @@ pub struct ReportedIssue {
     pub(crate) line: usize,
     pub(crate) message: String,
 }
+
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ScanSummary {
+    pub files_scanned: usize,
+    pub total_issues: usize,
+    pub errors: usize,
+    pub warnings: usize,
+    pub info: usize,
+}
+
+impl ScanSummary {
+    pub fn new(files_scanned: usize, issues: &[ReportedIssue]) -> Self {
+        let mut summary = Self {
+            files_scanned,
+            total_issues: issues.len(),
+            ..Self::default()
+        };
+
+        for issue in issues {
+            match issue.severity {
+                Severity::Error => summary.errors += 1,
+                Severity::Warning => summary.warnings += 1,
+                Severity::Info => summary.info += 1,
+            }
+        }
+
+        summary
+    }
+}
