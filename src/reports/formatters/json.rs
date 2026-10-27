@@ -57,24 +57,27 @@ mod tests {
             "Missing FROM instruction",
         )];
 
-        let json = serde_json::to_value(&issues).unwrap();
+        let json = json_content(&issues);
 
-        assert!(json.is_array());
-        assert_eq!(json.as_array().unwrap().len(), 1);
-        // assert_eq!(json[0]["severity"], Severity::Error); // Error: comparing `serde_json::Value` to `models::Severity`
-        assert_eq!(json[0]["severity"], "ERROR");
-        assert_eq!(json[0]["file_path"], "Dockerfile");
-        assert_eq!(json[0]["line"], 1);
-        assert_eq!(json[0]["message"], "Missing FROM instruction");
+        assert!(json.is_object());
+        let results = json["issues"].as_array().unwrap();
+        assert_eq!(results.len(), 1);
+
+        assert_eq!(results[0]["severity"], "ERROR");
+        assert_eq!(results[0]["rule"], "DF001");
+        assert_eq!(results[0]["file_path"], "Dockerfile");
+        assert_eq!(results[0]["line"], 1);
+        assert_eq!(results[0]["message"], "Missing FROM instruction");
     }
 
     #[test]
     fn test_json_content_with_empty_issues() {
-        let issues = vec![{}];
-        let json = serde_json::to_value(&issues).unwrap();
+        let issues = vec![];
+        let json = json_content(&issues);
 
-        assert!(json.is_array());
-        assert_eq!(json.as_array().unwrap().len(), 1);
+        assert!(json.is_object());
+        let results = json["issues"].as_array().unwrap();
+        assert_eq!(results.len(), 0);
     }
 
     #[test]
