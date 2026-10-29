@@ -20,10 +20,11 @@ pub fn json_content(issues: &[ReportedIssue]) -> serde_json::Value {
     })
 }
 
-pub fn json_render(issues: &[ReportedIssue]) -> Result<()> {
+pub fn json_render(issues: &[ReportedIssue]) -> Result<String> {
     let json_report = json_content(issues);
-    println!("{}", serde_json::to_string_pretty(&json_report)?);
-    Ok(())
+    let output_str = serde_json::to_string_pretty(&json_report)?;
+    // println!("{}", serde_json::to_string_pretty(&json_report)?);
+    Ok(output_str)
 }
 
 #[cfg(test)]

@@ -51,9 +51,8 @@ pub fn html_content(issues: &[ReportedIssue]) -> String {
 }
 
 #[allow(clippy::unnecessary_wraps)]
-pub fn html_render(issues: &[ReportedIssue]) -> Result<()> {
-    println!("{}", html_content(issues));
-    Ok(())
+pub fn html_render(issues: &[ReportedIssue]) -> Result<String> {
+    Ok(html_content(issues))
 }
 
 #[cfg(test)]

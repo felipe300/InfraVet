@@ -30,9 +30,8 @@ fn csv_content(issues: &[ReportedIssue]) -> String {
 }
 
 #[allow(clippy::unnecessary_wraps)]
-pub fn csv_render(issues: &[ReportedIssue]) -> Result<()> {
-    println!("{}", csv_content(issues));
-    Ok(())
+pub fn csv_render(issues: &[ReportedIssue]) -> Result<String> {
+    Ok(csv_content(issues))
 }
 
 #[cfg(test)]

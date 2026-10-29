@@ -14,19 +14,18 @@ pub fn render_reports(
     issues: &[ReportedIssue],
     summary: &ScanSummary,
     format: OutputFormat,
-) -> Result<()> {
-    match format {
+) -> Result<String> {
+    let content = match format {
         OutputFormat::Json => json::json_render(issues)?,
         OutputFormat::Markdown => markdown::markdown_render(issues)?,
         OutputFormat::Html => html::html_render(issues)?,
         OutputFormat::Csv => csv::csv_render(issues)?,
         OutputFormat::Junit => junit::junit_render(issues)?,
         OutputFormat::Sarif => sarif::sarif_render(issues)?,
-        // OutputFormat::Cli => bail!("CLI format does not produce a report string"),
         OutputFormat::Cli => cli::cli_render(summary)?,
-    }
+    };
 
-    Ok(())
+    Ok(content)
 }
 
 #[cfg(test)]
@@ -58,12 +57,4 @@ mod tests {
             );
         }
     }
-
-    // #[test]
-    // #[should_panic(expected = "CLI format does not produce a report string")]
-    // fn test_render_reports_panics_on_cli_format() {
-    //     let issues = mock_issues();
-    //
-    //     let _ = render_reports(&issues, OutputFormat::Cli);
-    // }
 }

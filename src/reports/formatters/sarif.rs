@@ -50,10 +50,10 @@ pub fn sarif_content(issues: &[ReportedIssue]) -> serde_json::Value {
     })
 }
 
-pub fn sarif_render(issues: &[ReportedIssue]) -> Result<()> {
+pub fn sarif_render(issues: &[ReportedIssue]) -> Result<String> {
     let sarif_report = sarif_content(issues);
-    println!("{}", serde_json::to_string_pretty(&sarif_report)?);
-    Ok(())
+    let output_str = serde_json::to_string(&sarif_report)?;
+    Ok(output_str)
 }
 
 #[cfg(test)]

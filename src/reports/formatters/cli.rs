@@ -4,9 +4,9 @@ use crate::models::ScanSummary;
 use crate::reports::output;
 
 #[allow(clippy::unnecessary_wraps)]
-pub fn cli_render(summary: &ScanSummary) -> Result<()> {
+pub fn cli_render(summary: &ScanSummary) -> Result<String> {
     output::render_summary(summary);
-    Ok(())
+    Ok(String::new())
 }
 
 #[cfg(test)]

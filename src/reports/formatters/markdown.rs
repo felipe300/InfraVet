@@ -24,9 +24,8 @@ pub fn markdown_content(issues: &[ReportedIssue]) -> String {
 }
 
 #[allow(clippy::unnecessary_wraps)]
-pub fn markdown_render(issues: &[ReportedIssue]) -> Result<()> {
-    println!("{}", markdown_content(issues));
-    Ok(())
+pub fn markdown_render(issues: &[ReportedIssue]) -> Result<String> {
+    Ok(markdown_content(issues))
 }
 
 #[cfg(test)]

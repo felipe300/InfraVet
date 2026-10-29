@@ -13,7 +13,6 @@ impl AnalysisContext {
         Self::default()
     }
 
-    /// Actualiza el contexto según la instrucción actual
     pub const fn update(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::From(_) => {

@@ -26,13 +26,13 @@ fn main() -> Result<()> {
             kubernetes,
             ansible,
             format,
-            output: _,
+            output,
             path: _,
         } => {
             let flags = (dockerfile, compose, terraform, kubernetes, ansible);
             let targets = Commands::resolve_targets(file_type, flags);
 
-            scan(&targets, format)?;
+            scan(&targets, format, output)?;
         }
         Commands::Rules => rules()?,
     }

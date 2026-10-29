@@ -79,10 +79,8 @@ pub fn junit_content(issues: &[ReportedIssue]) -> String {
 }
 
 #[allow(clippy::unnecessary_wraps)]
-pub fn junit_render(issues: &[ReportedIssue]) -> Result<()> {
-    let junit_report = junit_content(issues);
-    println!("{junit_report}");
-    Ok(())
+pub fn junit_render(issues: &[ReportedIssue]) -> Result<String> {
+    Ok(junit_content(issues))
 }
 
 #[cfg(test)]

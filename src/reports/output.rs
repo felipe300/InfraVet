@@ -6,7 +6,6 @@ use crate::{
     models::{FileType, RuleDefinition, ScanSummary, Severity},
 };
 
-#[expect(dead_code)]
 pub fn success(message: &str) {
     println!("{} {}", "✔".green().bold(), message.bold());
 }
