@@ -113,9 +113,9 @@ impl ScanSummary {
 
         for issue in issues {
             match issue.severity {
-                Severity::Error => summary.errors += 1,
-                Severity::Warning => summary.warnings += 1,
-                Severity::Info => summary.info += 1,
+                Severity::Error => summary.errors = summary.errors.saturating_add(1),
+                Severity::Warning => summary.warnings = summary.warnings.saturating_add(1),
+                Severity::Info => summary.info = summary.info.saturating_add(1),
             }
         }
 

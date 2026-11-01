@@ -32,7 +32,6 @@ impl DockerfileRule for DF008 {
                     || ext.eq_ignore_ascii_case("zip")
             });
 
-            #[allow(clippy::case_sensitive_file_extension_comparisons)]
             let is_tar_gz = source.to_lowercase().ends_with(".tar.gz");
 
             let is_archive = is_simple_archive || is_tar_gz;

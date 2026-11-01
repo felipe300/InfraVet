@@ -11,7 +11,7 @@ InfraVet currently supports **Dockerfile discovery, parsing, and static analysis
 - **Build & Performance** (`DF005`, `DF010`)
 - **Reproducibility & Quality** (`DF003`, `DF008`, `DF011`)
 
-For a complete catalog of rules, descriptions, and examples, see [`docs/rules.md`].
+For a complete catalog of rules, descriptions, and examples, see [`docs/rules.md`](docs/rules.md).
 
 ---
 

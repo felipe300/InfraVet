@@ -19,7 +19,7 @@ pub fn scan(
     let found_files = find_files_for_targets(&current_dir, targets);
 
     let mut all_issues: Vec<ReportedIssue> = Vec::new();
-    let mut files_scanned = 0;
+    let mut files_scanned: usize = 0;
 
     for (file_type, path) in &found_files {
         let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
@@ -27,7 +27,7 @@ pub fn scan(
 
         match analyze_single_file(*file_type, path) {
             Ok(issues) => {
-                files_scanned += 1;
+                files_scanned = files_scanned.saturating_add(1);
 
                 for issue in issues {
                     all_issues.push(ReportedIssue {
