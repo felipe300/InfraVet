@@ -11,7 +11,7 @@ Actualmente, InfraVet permite **descubrir, interpretar y analizar estáticamente
 - **Construcción y rendimiento** (`DF005`, `DF010`)
 - **Reproducibilidad y calidad** (`DF003`, `DF008`, `DF011`)
 
-Para consultar el catálogo completo de reglas, sus descripciones y ejemplos, revisa [`docs/rules.md`](docs/rules.md).
+Para consultar el catálogo completo de reglas, sus descripciones y ejemplos, revisa [`docs/rules.md`].
 
 ---
 
