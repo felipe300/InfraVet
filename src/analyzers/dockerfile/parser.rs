@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use dockerfile_parser::Dockerfile;
+use rayon::prelude::*;
 use std::{fs, path::Path};
 
 use crate::analyzers::dockerfile::context::AnalysisContext;
@@ -42,11 +43,17 @@ pub fn analyze_dockerfile(path: &Path) -> Result<Vec<Issue>> {
 
         ctx.update(instruction);
 
-        for rule in &rules {
-            if let Some(issue) = rule.check(instruction, &content, line) {
-                issues.push(issue);
-            }
-        }
+        // for rule in &rules {
+        //     if let Some(issue) = rule.check(instruction, &content, line) {
+        //         issues.push(issue);
+        //     }
+        // }
+        let instruction_issues: Vec<Issue> = rules
+            .par_iter()
+            .filter_map(|rule| rule.check(instruction, &content, line))
+            .collect();
+
+        issues.extend(instruction_issues);
     }
 
     issues.extend(execution_rules::execute_rules(&ctx));

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use rayon::prelude::*;
 use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -18,35 +19,47 @@ pub fn scan(
 
     let found_files = find_files_for_targets(&current_dir, targets);
 
+    let results: Vec<_> = found_files
+        .par_iter()
+        .map(|(file_type, path)| {
+            let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
+            let path_str = relative_path.display().to_string();
+
+            match analyze_single_file(*file_type, path) {
+                Ok(issues) => {
+                    let report_issues: Vec<ReportedIssue> = issues
+                        .into_iter()
+                        .map(|issue| ReportedIssue {
+                            file_path: path_str.clone(),
+                            severity: issue.severity.clone(),
+                            rule: issue.rule.to_string(),
+                            line: issue.line,
+                            message: issue.message,
+                        })
+                        .collect();
+
+                    Ok(report_issues)
+                }
+                Err(err) => Err((path.display().to_string(), err)),
+            }
+        })
+        .collect();
+
     let mut all_issues: Vec<ReportedIssue> = Vec::new();
     let mut files_scanned: usize = 0;
 
-    for (file_type, path) in &found_files {
-        let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
-        let path_str = relative_path.display().to_string();
-
-        match analyze_single_file(*file_type, path) {
+    for result in results {
+        match result {
             Ok(issues) => {
                 files_scanned = files_scanned.saturating_add(1);
-
-                for issue in issues {
-                    all_issues.push(ReportedIssue {
-                        file_path: path_str.clone(),
-                        severity: issue.severity.clone(),
-                        rule: issue.rule.to_string(),
-                        line: issue.line,
-                        message: issue.message.clone(),
-                    });
-                }
+                all_issues.extend(issues);
             }
-            Err(err) => {
-                output::error(&format!("Error analyzing {}: {err}", path.display()));
+            Err((path, err)) => {
+                output::error(&format!("Error analyzing {path}: {err}"));
             }
         }
     }
-
     let summary = ScanSummary::new(files_scanned, &all_issues);
-
     let report_content = render_reports(&all_issues, &summary, format)?;
 
     if let Some(path) = output_path {
@@ -175,5 +188,66 @@ mod tests {
         let matches = find_files_for_targets(&root, &targets);
 
         assert_eq!(matches.len(), 4);
+    }
+
+    #[test]
+    fn test_match_file_type_variations() {
+        assert!(match_file_type(
+            Path::new("Dockerfile"),
+            FileType::Dockerfile
+        ));
+        assert!(match_file_type(
+            Path::new("Dockerfile.dev"),
+            FileType::Dockerfile
+        ));
+        assert!(match_file_type(
+            Path::new("docker-compose.yml"),
+            FileType::Compose
+        ));
+        assert!(match_file_type(
+            Path::new("compose.override.yaml"),
+            FileType::Compose
+        ));
+        assert!(match_file_type(Path::new("main.tf"), FileType::Terraform));
+        assert!(match_file_type(
+            Path::new("deployment.yml"),
+            FileType::Kubernetes
+        ));
+        assert!(match_file_type(Path::new("site.yaml"), FileType::Ansible));
+        assert!(match_file_type(
+            Path::new("web_playbook.yml"),
+            FileType::Ansible
+        ));
+
+        assert!(!match_file_type(Path::new("main.rs"), FileType::Dockerfile));
+        assert!(!match_file_type(
+            Path::new("values.json"),
+            FileType::Kubernetes
+        ));
+    }
+
+    #[test]
+    fn test_is_hidden_or_ignored() {
+        let (_dir, root) = create_test_structure();
+
+        let hidden_entry = WalkDir::new(root.join(".git"))
+            .into_iter()
+            .next()
+            .unwrap()
+            .unwrap();
+        let target_entry = WalkDir::new(root.join("target"))
+            .into_iter()
+            .next()
+            .unwrap()
+            .unwrap();
+        let normal_entry = WalkDir::new(root.join("Dockerfile"))
+            .into_iter()
+            .next()
+            .unwrap()
+            .unwrap();
+
+        assert!(is_hidden_or_ignored(&hidden_entry));
+        assert!(is_hidden_or_ignored(&target_entry));
+        assert!(!is_hidden_or_ignored(&normal_entry));
     }
 }

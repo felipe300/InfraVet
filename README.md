@@ -4,5 +4,5 @@
 
 ## Languages
 
-- Documentación en [español](/docs/es.md)
+- Documentación en [Español](/docs/es.md)
 - Documentación en [English](/docs/en.md)
