@@ -96,7 +96,10 @@ pub struct ReportedIssue {
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct ScanSummary {
+    pub files_found: usize,
     pub files_scanned: usize,
+    pub files_failed: usize,
+
     pub total_issues: usize,
     pub errors: usize,
     pub warnings: usize,
@@ -104,21 +107,37 @@ pub struct ScanSummary {
 }
 
 impl ScanSummary {
-    pub fn new(files_scanned: usize, issues: &[ReportedIssue]) -> Self {
+    pub fn new(
+        files_found: usize,
+        files_scanned: usize,
+        files_failed: usize,
+        issues: &[ReportedIssue],
+    ) -> Self {
         let mut summary = Self {
+            files_found,
             files_scanned,
+            files_failed,
             total_issues: issues.len(),
             ..Self::default()
         };
 
         for issue in issues {
             match issue.severity {
-                Severity::Error => summary.errors = summary.errors.saturating_add(1),
-                Severity::Warning => summary.warnings = summary.warnings.saturating_add(1),
-                Severity::Info => summary.info = summary.info.saturating_add(1),
+                // Severity::Error => summary.errors = summary.errors.saturating_add(1),
+                // Severity::Warning => summary.warnings = summary.warnings.saturating_add(1),
+                // Severity::Info => summary.info = summary.info.saturating_add(1),
+                Severity::Error => summary.errors += 1,
+                Severity::Warning => summary.warnings += 1,
+                Severity::Info => summary.info += 1,
             }
         }
 
         summary
     }
+}
+
+#[derive(Debug)]
+pub struct FileAnalysisResult {
+    pub file_path: String,
+    pub result: std::result::Result<Vec<ReportedIssue>, String>,
 }

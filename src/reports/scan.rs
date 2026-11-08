@@ -6,7 +6,7 @@ use walkdir::WalkDir;
 
 use crate::analyzers::dockerfile::parser::analyze_dockerfile;
 use crate::core::issue::Issue;
-use crate::models::{FileType, OutputFormat, ReportedIssue, ScanSummary};
+use crate::models::{FileAnalysisResult, FileType, OutputFormat, ReportedIssue, ScanSummary};
 use crate::reports::formatters::render_reports;
 use crate::reports::output;
 
@@ -16,51 +16,14 @@ pub fn scan(
     output_path: Option<PathBuf>,
 ) -> Result<()> {
     let current_dir = env::current_dir()?;
-
     let found_files = find_files_for_targets(&current_dir, targets);
-
-    let results: Vec<_> = found_files
-        .par_iter()
-        .map(|(file_type, path)| {
-            let relative_path = path.strip_prefix(&current_dir).unwrap_or(path);
-            let path_str = relative_path.display().to_string();
-
-            match analyze_single_file(*file_type, path) {
-                Ok(issues) => {
-                    let report_issues: Vec<ReportedIssue> = issues
-                        .into_iter()
-                        .map(|issue| ReportedIssue {
-                            file_path: path_str.clone(),
-                            severity: issue.severity.clone(),
-                            rule: issue.rule.to_string(),
-                            line: issue.line,
-                            message: issue.message,
-                        })
-                        .collect();
-
-                    Ok(report_issues)
-                }
-                Err(err) => Err((path.display().to_string(), err)),
-            }
-        })
-        .collect();
-
-    let mut all_issues: Vec<ReportedIssue> = Vec::new();
-    let mut files_scanned: usize = 0;
-
-    for result in results {
-        match result {
-            Ok(issues) => {
-                files_scanned = files_scanned.saturating_add(1);
-                all_issues.extend(issues);
-            }
-            Err((path, err)) => {
-                output::error(&format!("Error analyzing {path}: {err}"));
-            }
-        }
-    }
-    let summary = ScanSummary::new(files_scanned, &all_issues);
+    let results = analyze_files(&found_files, &current_dir);
+    let (all_issues, summary, analysis_errors) = consolidate_results(results);
     let report_content = render_reports(&all_issues, &summary, format)?;
+
+    for error in analysis_errors {
+        output::error(&error);
+    }
 
     if let Some(path) = output_path {
         std::fs::write(&path, &report_content)?;
@@ -148,6 +111,61 @@ fn is_hidden_or_ignored(entry: &walkdir::DirEntry) -> bool {
         .file_name()
         .to_str()
         .is_some_and(|name| name.starts_with('.') || name == "target" || name == "node_modules")
+}
+
+fn consolidate_results(
+    results: Vec<FileAnalysisResult>,
+) -> (Vec<ReportedIssue>, ScanSummary, Vec<String>) {
+    let files_found = results.len();
+    let mut all_issues = Vec::new();
+    let mut files_scanned = 0;
+    let mut files_failed = 0;
+    let mut analysis_errors = Vec::new();
+
+    for result in results {
+        match result.result {
+            Ok(issues) => {
+                files_scanned += 1;
+                all_issues.extend(issues);
+            }
+            Err(error) => {
+                files_failed += 1;
+                let file = result.file_path;
+                analysis_errors.push(format!("Error analysis {file}: {error}"));
+            }
+        }
+    }
+
+    let summary = ScanSummary::new(files_found, files_scanned, files_failed, &all_issues);
+
+    (all_issues, summary, analysis_errors)
+}
+
+fn analyze_files(found_files: &[(FileType, PathBuf)], root: &Path) -> Vec<FileAnalysisResult> {
+    found_files
+        .par_iter()
+        .map(|(file_type, path)| {
+            let relative_path = path.strip_prefix(root).unwrap_or(path);
+            let file_path = relative_path.display().to_string();
+
+            let result = analyze_single_file(*file_type, path)
+                .map(|issues| {
+                    issues
+                        .into_iter()
+                        .map(|issue| ReportedIssue {
+                            file_path: file_path.clone(),
+                            severity: issue.severity,
+                            rule: issue.rule.to_string(),
+                            line: issue.line,
+                            message: issue.message,
+                        })
+                        .collect()
+                })
+                .map_err(|error| error.to_string());
+
+            FileAnalysisResult { file_path, result }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -249,5 +267,28 @@ mod tests {
         assert!(is_hidden_or_ignored(&hidden_entry));
         assert!(is_hidden_or_ignored(&target_entry));
         assert!(!is_hidden_or_ignored(&normal_entry));
+    }
+
+    #[test]
+    fn test_consolidate_results_with_failed_file() {
+        let results = vec![
+            FileAnalysisResult {
+                file_path: "Dockerfile".to_string(),
+                result: Ok(vec![]),
+            },
+            FileAnalysisResult {
+                file_path: "Dockerfile.prod".to_string(),
+                result: Err("Permission denied".to_string()),
+            },
+        ];
+
+        let (issues, summary, errors) = consolidate_results(results);
+
+        assert!(issues.is_empty());
+        assert_eq!(summary.files_found, 2);
+        assert_eq!(summary.files_scanned, 1);
+        assert_eq!(summary.files_failed, 1);
+        assert_eq!(summary.total_issues, 0);
+        assert_eq!(errors.len(), 1);
     }
 }

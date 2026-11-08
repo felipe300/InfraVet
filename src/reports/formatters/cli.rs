@@ -15,14 +15,18 @@ mod tests {
     use crate::models::ScanSummary;
 
     fn scan_summary(
+        files_found: usize,
         files_scanned: usize,
+        files_failed: usize,
         total_issues: usize,
         errors: usize,
         warnings: usize,
         info: usize,
     ) -> ScanSummary {
         ScanSummary {
+            files_found,
             files_scanned,
+            files_failed,
             total_issues,
             errors,
             warnings,
@@ -40,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_cli_render_empty() {
-        let summary = scan_summary(0, 0, 0, 0, 0);
+        let summary = scan_summary(0, 0, 0, 0, 0, 0, 0);
         let result = cli_render(&summary);
 
         assert!(result.is_ok());
@@ -48,7 +52,7 @@ mod tests {
 
     #[test]
     fn test_cli_render_success() {
-        let summary = scan_summary(5, 10, 3, 1, 7);
+        let summary = scan_summary(5, 10, 2, 2, 3, 1, 7);
         let result = cli_render(&summary);
 
         assert!(result.is_ok());

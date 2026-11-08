@@ -38,7 +38,7 @@ mod tests {
     #[test]
     fn test_render_reports_supports_all_export_formats() {
         let issues = mock_issues();
-        let summary = ScanSummary::new(0, &issues);
+        let summary = ScanSummary::new(0, 0, 0, &issues);
         let formats = [
             OutputFormat::Csv,
             OutputFormat::Html,
