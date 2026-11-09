@@ -5,8 +5,9 @@ use crate::reports::output;
 
 #[allow(clippy::unnecessary_wraps)]
 pub fn cli_render(summary: &ScanSummary) -> Result<String> {
-    output::render_summary(summary);
-    Ok(String::new())
+    // output::render_summary(summary);
+    // Ok(String::new())
+    Ok(output::render_summary(summary))
 }
 
 #[cfg(test)]

@@ -108,28 +108,63 @@ fn rule_definition(rule: &RuleDefinition) {
     println!();
 }
 
-pub fn render_summary(summary: &ScanSummary) {
+pub fn render_summary(summary: &ScanSummary) -> String {
     let separator = "━".repeat(42);
 
-    println!();
-    println!("{}", "INFRAVET · Infrastructure Analysis".green().bold());
-    println!("{}", separator.dimmed());
+    let (status, status_color) = if summary.files_found == 0 {
+        ("NO FILES FOUND", "info")
+    } else if summary.files_failed == summary.files_found {
+        ("SCAN FAILED", "error")
+    } else if summary.files_failed > 0 {
+        ("PARTIAL SCAN", "warning")
+    } else {
+        ("SCAN COMPLETED", "success")
+    };
 
-    println!("{}", "GENERAL SCAN REPORT".bold());
-    println!();
+    let status = match status_color {
+        "success" => status.green().bold().to_string(),
+        "warning" => status.yellow().bold().to_string(),
+        "error" => status.red().bold().to_string(),
+        _ => status.cyan().bold().to_string(),
+    };
 
-    println!("  Files scanned: {}", summary.files_scanned);
-    println!("  Total issues:  {}", summary.total_issues);
+    let title = "INFRAVET · Infrastructure Analysis".green().bold();
+    let separator_style = separator.dimmed();
+    let section_title = "GENERAL SCAN REPORT".bold();
+    let file_analysis_style = "FILE ANALYSIS".bold();
+    let files_found_styles = summary.files_found;
+    let files_scanned_styles = summary.files_scanned;
+    let files_failed_styles = summary.files_failed;
+    let total_issued_styles = summary.total_issues;
 
-    println!();
-    println!("{}", separator.dimmed());
-
-    println!("  {} {:<12} {}", "●".red(), "Errors", summary.errors);
-
-    println!("  {} {:<12} {}", "●".yellow(), "Warnings", summary.warnings);
-
-    println!("  {} {:<12} {}", "●".cyan(), "Info", summary.info);
-
-    println!("{}", separator.dimmed());
-    println!();
+    format!(
+        "\n\
+         {title}\n\
+         {separator_style}\n\
+         {section_title}\n\
+         Status: {status}\n\
+         \n\
+         {file_analysis_style}\n\
+         \n\
+           Files found:   {files_found_styles}\n\
+           Files scanned: {files_scanned_styles}\n\
+           Files failed:  {files_failed_styles}\n\
+         \n\
+           Total issues:  {total_issued_styles}\n\
+         \n\
+         {separator_style}\n\
+           {} {:<12} {}\n\
+           {} {:<12} {}\n\
+           {} {:<12} {}\n\
+         {separator_style}\n",
+        "●".red(),
+        "Errors",
+        summary.errors,
+        "●".yellow(),
+        "Warnings",
+        summary.warnings,
+        "●".cyan(),
+        "Info",
+        summary.info,
+    )
 }
