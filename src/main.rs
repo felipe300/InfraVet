@@ -6,6 +6,7 @@ use crate::{cli::Commands, reports::scan};
 mod analyzers;
 mod cli;
 mod commands;
+mod config;
 mod core;
 mod models;
 mod reports;
@@ -19,6 +20,7 @@ fn main() -> Result<()> {
 
     match args.command {
         Commands::Scan {
+            path,
             file_type,
             dockerfile,
             compose,
@@ -27,12 +29,12 @@ fn main() -> Result<()> {
             ansible,
             format,
             output,
-            path: _,
+            config,
         } => {
             let flags = (dockerfile, compose, terraform, kubernetes, ansible);
             let targets = Commands::resolve_targets(file_type, flags);
 
-            scan(&targets, format, output)?;
+            scan(&path, &targets, format, output, config.as_ref())?;
         }
         Commands::Rules => rules()?,
     }

@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::models::Severity;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RuleId(String);
 
 impl RuleId {

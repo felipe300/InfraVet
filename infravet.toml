@@ -1,0 +1,14 @@
+default-severity = "WARNING"
+
+[ignore]
+paths = ["legacy/", "tmp/"]
+
+[rules]
+# Sobrescritura directa de severidad
+"DF001" = "ERROR"
+
+# Sobrescritura detallada (deshabilitar regla)
+"DF002" = { enabled = false }
+
+# Sobrescritura detallada (cambiar severidad manteniendo habilitada)
+"DF003" = { enabled = true, severity = "INFO" }

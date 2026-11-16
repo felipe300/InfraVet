@@ -82,9 +82,10 @@ fn rule_file_type_handler(file_type: FileType) {
 
 fn rule_definition(rule: &RuleDefinition) {
     let severity = match rule.severity {
-        Severity::Error => "ERROR".red().bold(),
-        Severity::Warning => "WARNING".yellow().bold(),
-        Severity::Info => "INFO".cyan().bold(),
+        Some(Severity::Error) => "ERROR".red().bold(),
+        Some(Severity::Warning) => "WARNING".yellow().bold(),
+        Some(Severity::Info) => "INFO".cyan().bold(),
+        None => "DEFAULT".white().bold(),
     };
 
     println!("  {}  {}", rule.code.bright_magenta().bold(), severity);

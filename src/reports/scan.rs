@@ -1,23 +1,28 @@
 use anyhow::Result;
 use rayon::prelude::*;
-use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 use crate::analyzers::dockerfile::parser::analyze_dockerfile;
+use crate::config::loader::{FileConfig, RuleConfigurationOverride};
 use crate::core::issue::Issue;
 use crate::models::{FileAnalysisResult, FileType, OutputFormat, ReportedIssue, ScanSummary};
 use crate::reports::formatters::render_reports;
 use crate::reports::output;
 
 pub fn scan(
+    target_path: &Path,
     targets: &[FileType],
     format: OutputFormat,
     output_path: Option<PathBuf>,
+    config_path: Option<&PathBuf>,
 ) -> Result<()> {
-    let current_dir = env::current_dir()?;
-    let found_files = find_files_for_targets(&current_dir, targets);
-    let results = analyze_files(&found_files, &current_dir);
+    let root = target_path.canonicalize()?;
+
+    let config = FileConfig::load_for_scan(&root, config_path.map(std::convert::AsRef::as_ref))?;
+
+    let found_files = find_files_for_targets(&root, targets, &config.ignore.paths);
+    let results = analyze_files(&found_files, &root, &config);
     let (all_issues, summary, analysis_errors) = consolidate_results(results);
     let report_content = render_reports(&all_issues, &summary, format)?;
 
@@ -60,12 +65,16 @@ fn analyze_single_file(file_type: FileType, path: &Path) -> Result<Vec<Issue>> {
     }
 }
 
-fn find_files_for_targets(root: &Path, targets: &[FileType]) -> Vec<(FileType, PathBuf)> {
+fn find_files_for_targets(
+    root: &Path,
+    targets: &[FileType],
+    ignored_paths: &[String],
+) -> Vec<(FileType, PathBuf)> {
     let mut matches = Vec::new();
 
     let walker = WalkDir::new(root)
         .into_iter()
-        .filter_entry(|entry| !is_hidden_or_ignored(entry));
+        .filter_entry(|entry| !is_hidden_or_ignored(entry, ignored_paths, root));
 
     for entry in walker.filter_map(Result::ok) {
         let path = entry.path();
@@ -106,11 +115,24 @@ fn match_file_type(path: &Path, file_type: FileType) -> bool {
     }
 }
 
-fn is_hidden_or_ignored(entry: &walkdir::DirEntry) -> bool {
-    entry
+fn is_hidden_or_ignored(entry: &walkdir::DirEntry, ignored_paths: &[String], root: &Path) -> bool {
+    let is_default_ignored = entry
         .file_name()
         .to_str()
-        .is_some_and(|name| name.starts_with('.') || name == "target" || name == "node_modules")
+        .is_some_and(|name| name.starts_with('.') || name == "target" || name == "node_modules");
+
+    if is_default_ignored {
+        return true;
+    }
+
+    let path = entry.path();
+    let relative_path = path.strip_prefix(root).unwrap_or(path);
+    let path_str = relative_path.to_string_lossy();
+
+    ignored_paths.iter().any(|ignored| {
+        let cleaned_ignored = ignored.trim_end_matches('/');
+        path_str == cleaned_ignored || path_str.starts_with(&format!("{cleaned_ignored}/"))
+    })
 }
 
 fn consolidate_results(
@@ -118,18 +140,18 @@ fn consolidate_results(
 ) -> (Vec<ReportedIssue>, ScanSummary, Vec<String>) {
     let files_found = results.len();
     let mut all_issues = Vec::new();
-    let mut files_scanned = 0;
-    let mut files_failed = 0;
+    let mut files_scanned: usize = 0;
+    let mut files_failed: usize = 0;
     let mut analysis_errors = Vec::new();
 
     for result in results {
         match result.result {
             Ok(issues) => {
-                files_scanned += 1;
+                files_scanned = files_scanned.saturating_add(1);
                 all_issues.extend(issues);
             }
             Err(error) => {
-                files_failed += 1;
+                files_failed = files_failed.saturating_add(1);
                 let file = result.file_path;
                 analysis_errors.push(format!("Error analysis {file}: {error}"));
             }
@@ -141,7 +163,11 @@ fn consolidate_results(
     (all_issues, summary, analysis_errors)
 }
 
-fn analyze_files(found_files: &[(FileType, PathBuf)], root: &Path) -> Vec<FileAnalysisResult> {
+fn analyze_files(
+    found_files: &[(FileType, PathBuf)],
+    root: &Path,
+    config: &FileConfig,
+) -> Vec<FileAnalysisResult> {
     found_files
         .par_iter()
         .map(|(file_type, path)| {
@@ -152,12 +178,43 @@ fn analyze_files(found_files: &[(FileType, PathBuf)], root: &Path) -> Vec<FileAn
                 .map(|issues| {
                     issues
                         .into_iter()
-                        .map(|issue| ReportedIssue {
-                            file_path: file_path.clone(),
-                            severity: issue.severity,
-                            rule: issue.rule.to_string(),
-                            line: issue.line,
-                            message: issue.message,
+                        .filter_map(|issue| {
+                            let rule_code = &issue.rule.to_string();
+                            if let Some(rule_override) = config.rules.get(rule_code) {
+                                match rule_override {
+                                    RuleConfigurationOverride::Severity(custom_severity) => {
+                                        Some(ReportedIssue {
+                                            file_path: file_path.clone(),
+                                            severity: custom_severity.clone(),
+                                            rule: issue.rule.to_string(),
+                                            line: issue.line,
+                                            message: issue.message,
+                                        })
+                                    }
+                                    RuleConfigurationOverride::Detailed { enabled, severity } => {
+                                        if !*enabled {
+                                            return None;
+                                        }
+                                        let final_severity =
+                                            severity.clone().unwrap_or(issue.severity);
+                                        Some(ReportedIssue {
+                                            file_path: file_path.clone(),
+                                            severity: final_severity,
+                                            rule: issue.rule.to_string(),
+                                            line: issue.line,
+                                            message: issue.message,
+                                        })
+                                    }
+                                }
+                            } else {
+                                Some(ReportedIssue {
+                                    file_path: file_path.clone(),
+                                    severity: issue.severity,
+                                    rule: issue.rule.to_string(),
+                                    line: issue.line,
+                                    message: issue.message,
+                                })
+                            }
                         })
                         .collect()
                 })
@@ -202,8 +259,9 @@ mod tests {
     fn test_find_files_for_targets() {
         let (_dir, root) = create_test_structure();
         let targets = vec![FileType::Dockerfile, FileType::Compose];
+        let ignored_paths: &[String] = &[];
 
-        let matches = find_files_for_targets(&root, &targets);
+        let matches = find_files_for_targets(&root, &targets, ignored_paths);
 
         assert_eq!(matches.len(), 4);
     }
@@ -264,9 +322,11 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        assert!(is_hidden_or_ignored(&hidden_entry));
-        assert!(is_hidden_or_ignored(&target_entry));
-        assert!(!is_hidden_or_ignored(&normal_entry));
+        let ignored_paths: &[String] = &[];
+
+        assert!(is_hidden_or_ignored(&hidden_entry, ignored_paths, &root));
+        assert!(is_hidden_or_ignored(&target_entry, ignored_paths, &root));
+        assert!(!is_hidden_or_ignored(&normal_entry, ignored_paths, &root));
     }
 
     #[test]
@@ -290,5 +350,32 @@ mod tests {
         assert_eq!(summary.files_failed, 1);
         assert_eq!(summary.total_issues, 0);
         assert_eq!(errors.len(), 1);
+    }
+
+    #[test]
+    fn test_scan_respects_infravet_toml_ignore_paths() {
+        let dir = tempdir().unwrap();
+
+        let root = dir.path().join("test_project");
+        fs::create_dir(&root).unwrap();
+        File::create(root.join("Dockerfile")).unwrap();
+
+        let exlcude_dir = root.join("legacy_infra");
+        fs::create_dir(&exlcude_dir).unwrap();
+        File::create(root.join("Dockerfile")).unwrap();
+
+        let config_content = r#"
+            [ignore]
+            paths = ["legacy_infra"]
+        "#;
+        fs::write(root.join("infravet"), config_content).unwrap();
+
+        let config = FileConfig::load_from_file(root.join("infravet.toml")).unwrap_or_default();
+        let targets = vec![FileType::Dockerfile];
+        let found_files = find_files_for_targets(&root, &targets, &config.ignore.paths);
+
+        assert_eq!(found_files.len(), 1);
+        assert!(found_files[0].1.ends_with("Dockerfile"));
+        assert!(!found_files[0].1.to_string_lossy().contains("legacy_infra"));
     }
 }

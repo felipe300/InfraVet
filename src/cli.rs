@@ -40,6 +40,10 @@ pub enum Commands {
         #[arg(default_value = ".")]
         path: PathBuf,
 
+        /// Load custom path to the configuration file (defaults to 'infravet.toml')
+        #[arg(short = 'C', long = "config", value_name = "FILE")]
+        config: Option<PathBuf>,
+
         /// Filter by specific infrastructure type.
         /// If not provided, all supported types will be scanned.
         #[arg(

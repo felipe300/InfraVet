@@ -55,10 +55,11 @@ pub enum FileType {
     Ansible,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum Severity {
     Error,
+    #[default]
     Warning,
     Info,
 }
@@ -73,7 +74,8 @@ pub struct RuleDefinition {
     pub(crate) code: String,
     pub(crate) file_type: FileType,
     pub(crate) category: String,
-    pub(crate) severity: Severity,
+    #[serde(default)]
+    pub(crate) severity: Option<Severity>,
     pub(crate) title: String,
     pub(crate) description: String,
     pub(crate) recommendation: String,
@@ -123,12 +125,9 @@ impl ScanSummary {
 
         for issue in issues {
             match issue.severity {
-                // Severity::Error => summary.errors = summary.errors.saturating_add(1),
-                // Severity::Warning => summary.warnings = summary.warnings.saturating_add(1),
-                // Severity::Info => summary.info = summary.info.saturating_add(1),
-                Severity::Error => summary.errors += 1,
-                Severity::Warning => summary.warnings += 1,
-                Severity::Info => summary.info += 1,
+                Severity::Error => summary.errors = summary.errors.saturating_add(1),
+                Severity::Warning => summary.warnings = summary.warnings.saturating_add(1),
+                Severity::Info => summary.info = summary.info.saturating_add(1),
             }
         }
 
