@@ -12,7 +12,7 @@ pub fn validate_config(config: &FileConfig) -> Result<()> {
     }
 
     for rule_id in config.rules.keys() {
-        if rule_id.trim().is_empty() {
+        if rule_id.as_str().trim().is_empty() {
             bail!("Configuration error: Found an empty rule identifier override.");
         }
     }

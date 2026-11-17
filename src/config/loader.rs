@@ -4,6 +4,7 @@ use std::{collections::HashMap, fs::read_to_string, path::Path};
 
 use crate::{
     config::{defaults::get_default_config, validation::validate_config},
+    core::issue::RuleId,
     models::Severity,
 };
 
@@ -14,7 +15,7 @@ pub struct FileConfig {
     pub ignore: IgnoreConfig,
 
     #[serde(default)]
-    pub rules: HashMap<String, RuleConfigurationOverride>,
+    pub rules: HashMap<RuleId, RuleConfigurationOverride>,
 
     #[serde(default)]
     pub default_severity: Severity,
@@ -105,18 +106,16 @@ mod tests {
 
         assert_eq!(config.default_severity, Severity::Warning);
         assert_eq!(config.ignore.paths, vec!["custom_ignore/".to_string()]);
-        assert!(config.rules.contains_key("DF001"));
-        assert!(config.rules.contains_key("DF002"));
+        assert!(config.rules.contains_key(&RuleId::new("DF001")));
+        assert!(config.rules.contains_key(&RuleId::new("DF002")));
     }
 
     #[test]
     fn test_load_default_configuration_fallback() {
         let dir = tempdir().unwrap();
-        // Intentamos cargar la configuración para un directorio donde no existe infravet.toml
         let config = FileConfig::load_for_scan(dir.path(), None).unwrap();
 
-        // Debe cargar los valores por defecto definidos en defaults.rs
         assert!(config.rules.is_empty());
-        assert!(config.ignore.paths.is_empty());
+        assert_eq!(config.ignore.paths, Vec::<String>::new());
     }
 }

@@ -179,8 +179,8 @@ fn analyze_files(
                     issues
                         .into_iter()
                         .filter_map(|issue| {
-                            let rule_code = &issue.rule.to_string();
-                            if let Some(rule_override) = config.rules.get(rule_code) {
+                            let rule_key = &issue.rule;
+                            if let Some(rule_override) = config.rules.get(rule_key) {
                                 match rule_override {
                                     RuleConfigurationOverride::Severity(custom_severity) => {
                                         Some(ReportedIssue {
@@ -227,6 +227,8 @@ fn analyze_files(
 
 #[cfg(test)]
 mod tests {
+    use crate::core::issue;
+
     use super::*;
     use std::fs::{self, File};
     use tempfile::tempdir;
@@ -377,5 +379,96 @@ mod tests {
         assert_eq!(found_files.len(), 1);
         assert!(found_files[0].1.ends_with("Dockerfile"));
         assert!(!found_files[0].1.to_string_lossy().contains("legacy_infra"));
+    }
+
+    #[test]
+    fn test_scan_applies_infravet_toml_rules_and_overrides() {
+        use crate::config::loader::FileConfig;
+        use crate::core::issue::Issue;
+        use crate::models::Severity;
+
+        let dir = tempdir().unwrap();
+        let root = dir.path().join("test_project");
+        fs::create_dir(&root).unwrap();
+
+        let config_content = r#"
+            default-severity = "WARNING"
+
+            [rules]
+            "DF002" = { enabled = false }
+            "DF003" = "ERROR"
+        "#;
+        fs::write(root.join("infravet.toml"), config_content).unwrap();
+
+        let config = FileConfig::load_for_scan(&root, None).unwrap();
+
+        let simulated_issues = vec![
+            Issue {
+                rule: issue::RuleId("DF001".to_string()),
+                severity: Severity::Error,
+                line: 1,
+                message: "Missing FROM".to_string(),
+            },
+            Issue {
+                rule: issue::RuleId("DF002".to_string()),
+                severity: Severity::Warning,
+                line: 5,
+                message: "Copy entire context".to_string(),
+            },
+            Issue {
+                rule: issue::RuleId("DF003".to_string()),
+                severity: Severity::Info,
+                line: 10,
+                message: "Latest tag used".to_string(),
+            },
+        ];
+
+        let filtered_issues: Vec<ReportedIssue> = simulated_issues
+            .into_iter()
+            .filter_map(|issue| {
+                let rule_code = issue.rule.to_string();
+                if let Some(rule_override) = config.rules.get(&issue::RuleId(rule_code)) {
+                    match rule_override {
+                        RuleConfigurationOverride::Severity(custom_severity) => {
+                            Some(ReportedIssue {
+                                file_path: "Dockerfile".to_string(),
+                                severity: custom_severity.clone(),
+                                rule: issue.rule.to_string(),
+                                line: issue.line,
+                                message: issue.message,
+                            })
+                        }
+                        RuleConfigurationOverride::Detailed { enabled, severity } => {
+                            if !*enabled {
+                                return None;
+                            }
+                            let final_severity = severity.clone().unwrap_or(issue.severity);
+                            Some(ReportedIssue {
+                                file_path: "Dockerfile".to_string(),
+                                severity: final_severity,
+                                rule: issue.rule.to_string(),
+                                line: issue.line,
+                                message: issue.message,
+                            })
+                        }
+                    }
+                } else {
+                    Some(ReportedIssue {
+                        file_path: "Dockerfile".to_string(),
+                        severity: issue.severity,
+                        rule: issue.rule.to_string(),
+                        line: issue.line,
+                        message: issue.message,
+                    })
+                }
+            })
+            .collect();
+
+        assert_eq!(filtered_issues.len(), 2);
+
+        assert!(!filtered_issues.iter().any(|i| i.rule == "DF002"));
+
+        let df003_issue = filtered_issues.iter().find(|i| i.rule == "DF003").unwrap();
+        assert_eq!(df003_issue.severity, Severity::Error);
     }
 }

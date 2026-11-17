@@ -1,13 +1,20 @@
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 use crate::models::Severity;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct RuleId(String);
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct RuleId(pub(crate) String);
 
 impl RuleId {
     pub(crate) fn new(id: impl Into<String>) -> Self {
         Self(id.into())
+    }
+
+    pub(crate) fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
