@@ -18,6 +18,7 @@ The analysis process includes:
 - Centralized consolidation of analysis results.
 - Tracking of files found, successfully analyzed, and failed.
 - Classification of findings by severity: `ERROR`, `WARNING`, and `INFO`.
+- Optional TOML configuration for ignored paths and per-rule overrides.
 - Report generation in multiple formats.
 
 To consult the complete rule catalog, descriptions, and examples, check `docs/rules.md`.
@@ -83,6 +84,28 @@ To display the catalog of implemented rules:
 cargo run -- rules
 ```
 
+### Configuration
+
+InfraVet loads `infravet.toml` from the root of the scanned directory. Use `-C` / `--config` to load an explicit file instead. If no configuration file is found, built-in defaults are used (no ignored paths, no rule overrides).
+
+```toml
+default-severity = "WARNING"
+
+[ignore]
+paths = ["legacy/", "tmp/"]
+
+[rules]
+"DF001" = "ERROR"                              # change severity
+"DF002" = { enabled = false }                  # disable a rule
+"DF003" = { enabled = true, severity = "INFO" }
+```
+
+- `ignore.paths` entries are relative to the scan root; absolute paths are rejected.
+- The short rule form (`"DF001" = "ERROR"`) changes severity. The detailed form also supports `enabled = false` to suppress a rule entirely.
+- `default-severity` is accepted by the parser but is not yet applied to findings; rule severities currently come from the rule implementations.
+
+The `infravet.toml` at the repository root is a sample configuration and applies to scans started from that directory.
+
 ---
 
 ## Project Structure
@@ -91,11 +114,13 @@ cargo run -- rules
 .
 ├── Cargo.toml
 ├── Cargo.lock
-├── docs/                 # Rule catalog (Markdown and JSON)
+├── infravet.toml          # Sample configuration
+├── docs/                  # Rule catalog (Markdown and JSON)
 └── src/
     ├── analyzers/         # Infrastructure analyzers and rules
     ├── cli.rs             # Command-line interface definitions
     ├── commands/          # Command implementations
+    ├── config/            # TOML loading, defaults and validation
     ├── core/              # Core abstractions for rules and findings
     ├── main.rs            # Application entry point
     ├── models.rs          # Shared data models and structures
@@ -118,11 +143,12 @@ cargo run -- rules
 - [x] Classification of findings by severity.
 - [x] Multiple report formats (`cli`, `json`, `markdown`, `html`, `csv`, `junit`, `sarif`).
 - [x] Report exporting to files (`-o` / `--output`).
+- [x] Configurable rules (`infravet.toml`: ignored paths, enable/disable and severity overrides).
+- [ ] Apply `default-severity` to findings that do not declare a severity.
 - [ ] Full Docker Compose compatibility.
 - [ ] Kubernetes compatibility.
 - [ ] Terraform compatibility.
 - [ ] Ansible compatibility.
-- [ ] Configurable rules.
 - [ ] CI/CD pipeline integration.
 
 ---

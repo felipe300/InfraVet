@@ -18,6 +18,7 @@ El proceso de análisis contempla:
 - Consolidación centralizada de los resultados del análisis.
 - Seguimiento de archivos encontrados, analizados correctamente y fallidos.
 - Clasificación de hallazgos según su severidad: `ERROR`, `WARNING` e `INFO`.
+- Configuración opcional mediante TOML para rutas ignoradas y sobrescrituras de reglas.
 - Generación de informes en distintos formatos.
 
 Para consultar el catálogo completo de reglas, sus descripciones y ejemplos, revisa [`docs/rules.md`](./rules.md).
@@ -83,6 +84,28 @@ Para mostrar el catálogo de reglas implementadas:
 cargo run -- rules
 ```
 
+### Configuración
+
+InfraVet carga `infravet.toml` desde la raíz del directorio analizado. Usa `-C` / `--config` para cargar un archivo explícito. Si no se encuentra ningún archivo de configuración, se aplican los valores por defecto (sin rutas ignoradas ni sobrescrituras de reglas).
+
+```toml
+default-severity = "WARNING"
+
+[ignore]
+paths = ["legacy/", "tmp/"]
+
+[rules]
+"DF001" = "ERROR"                              # cambiar severidad
+"DF002" = { enabled = false }                  # deshabilitar una regla
+"DF003" = { enabled = true, severity = "INFO" }
+```
+
+- Las rutas en `ignore.paths` son relativas a la raíz del análisis; las rutas absolutas se rechazan.
+- La forma corta (`"DF001" = "ERROR"`) cambia la severidad. La forma detallada también admite `enabled = false` para suprimir una regla por completo.
+- `default-severity` es aceptado por el analizador de configuración, pero todavía no se aplica a los hallazgos; la severidad de cada regla proviene de su implementación.
+
+El archivo `infravet.toml` en la raíz del repositorio es una configuración de ejemplo y se aplica a los análisis iniciados desde ese directorio.
+
 ---
 
 ## Estructura del proyecto
@@ -91,11 +114,13 @@ cargo run -- rules
 .
 ├── Cargo.toml
 ├── Cargo.lock
-├── docs/                 # Catálogo de reglas (Markdown y JSON)
+├── infravet.toml          # Configuración de ejemplo
+├── docs/                  # Catálogo de reglas (Markdown y JSON)
 └── src/
     ├── analyzers/         # Analizadores y reglas de infraestructura
     ├── cli.rs             # Definiciones de la interfaz de línea de comandos
     ├── commands/          # Implementación de comandos
+    ├── config/            # Carga, valores por defecto y validación de TOML
     ├── core/              # Abstracciones principales de reglas y hallazgos
     ├── main.rs            # Punto de entrada de la aplicación
     ├── models.rs          # Modelos y estructuras de datos compartidos
@@ -116,11 +141,12 @@ cargo run -- rules
 - [x] Clasificación de hallazgos por severidad.
 - [x] Múltiples formatos de informe (`cli`, `json`, `markdown`, `html`, `csv`, `junit`, `sarif`).
 - [x] Exportación de informes a archivos (`-o` / `--output`).
+- [x] Reglas configurables (`infravet.toml`: rutas ignoradas, activar/desactivar reglas y sobrescrituras de severidad).
+- [ ] Aplicar `default-severity` a los hallazgos que no declaran una severidad.
 - [ ] Compatibilidad completa con Docker Compose.
 - [ ] Compatibilidad con Kubernetes.
 - [ ] Compatibilidad con Terraform.
 - [ ] Compatibilidad con Ansible.
-- [ ] Reglas configurables.
 - [ ] Integración con pipelines de CI/CD.
 
 ## Licencia

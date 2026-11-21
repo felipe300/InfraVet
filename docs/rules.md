@@ -10,6 +10,8 @@ This document contains the rules used by `infra_vet` to analyze Dockerfiles.
 | WARNING  | A potential problem or recommended best practice. |
 | INFO     | An optional recommendation or improvement.        |
 
+The severities below are the built-in defaults. They can be changed per scan, or a rule can be disabled entirely, with `[rules]` overrides in `infravet.toml` (see the Configuration section in [`en.md`](./en.md) or [`es.md`](./es.md)).
+
 ---
 
 # Dockerfile
@@ -66,7 +68,7 @@ Missing `USER` instruction. Running containers as the `root` user poses security
 
 ```dockerfile
 FROM alpine:3.18
-RUN apk add --no-舆 python3
+RUN apk add --no-cache python3
 ```
 
 ---
@@ -109,4 +111,63 @@ The Dockerfile contains syntax errors that prevent it from being parsed correctl
 
 ```dockerfile
 INVALID_INSTRUCTION something
+```
+
+---
+
+## DF008 — Use COPY instead of ADD
+
+**Severity:** WARNING
+
+`ADD` is used for a local file or directory. `COPY` is more explicit and predictable; reserve `ADD` for archive extraction or remote URLs.
+
+### Example
+
+```dockerfile
+FROM alpine:3.18
+ADD app.js /app/
+```
+
+---
+
+## DF009 — Possible sensitive data in ENV or ARG
+
+**Severity:** ERROR
+
+An `ENV` or `ARG` instruction contains a keyword associated with credentials (for example `PASSWORD`, `TOKEN` or `API_KEY`). Such values remain visible in the image history. Use secret mounts or runtime environment variables instead.
+
+### Example
+
+```dockerfile
+FROM alpine:3.18
+ENV DB_PASSWORD=secret123
+```
+
+---
+
+## DF010 — Uncleaned package manager caches
+
+**Severity:** WARNING
+
+Packages are installed without cleaning the package manager cache, which increases the resulting image size. For apt, remove `/var/lib/apt/lists/*`; for apk, use `--no-cache` or remove the cache directory.
+
+### Example
+
+```dockerfile
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y curl
+```
+
+---
+
+## DF011 — Missing HEALTHCHECK instruction
+
+**Severity:** INFO
+
+No `HEALTHCHECK` instruction was found, so Docker cannot automatically monitor the container's health. Add one when the application exposes a meaningful health check.
+
+### Example
+
+```dockerfile
+FROM nginx:alpine
 ```
