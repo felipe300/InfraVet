@@ -1,14 +1,16 @@
-name: Rust CI
+name: Infravet CI
 
 "on":
   push:
     branches:
       - main
-      - develop
   pull_request:
     branches:
       - main
-      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
