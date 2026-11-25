@@ -1,0 +1,144 @@
+name: Infravet Release
+
+"on":
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check version matches tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          EXPECTED_VERSION="${RELEASE_TAG#v}"
+          PACKAGE_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "infra_vet") | .version')
+
+          echo "Tag version: $EXPECTED_VERSION"
+          echo "Cargo version: $PACKAGE_VERSION"
+
+          test "$EXPECTED_VERSION" = "$PACKAGE_VERSION"
+
+      - name: Check
+        run: cargo fmt --all --check
+
+      - name: Run Clippy
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        run: cargo test --locked --all-features
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: validate
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build binary
+        run: cargo build --locked --release --target ${{ matrix.target }}
+
+      - name: Package Unix binary
+        if: runner.os != 'windows'
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p dist
+          tar -czf "dist/infra_vet-${TARGET}.tar.gz" -C "target/${TARGET}/release" infra_vet
+          cd dist
+          sha256sum "infra_vet-${TARGET}.tar.gz" > "SHA256SUMS-${TARGET}.txt"
+
+      - name: Package Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Compress-Archive `
+          -Path "target/$env:TARGET/release/infra_vet.exe" `
+          -DestinationPath "dist/infra_vet-$env:TARGET.zip"
+
+          $hash = (Get-FileHash `
+          "dist/infra_vet-$env:TARGET.zip" `
+          -Algorithm SHA256).Hash.ToLower()
+
+          "$hash  infra_vet-$env:TARGET.zip" |
+          Out-File "dist/SHA256SUMS-$env:TARGET.txt"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: infra_vet-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish Github Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacs
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: dist/*
