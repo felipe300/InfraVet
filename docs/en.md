@@ -84,6 +84,11 @@ To display the catalog of implemented rules:
 cargo run -- rules
 ```
 
+## CI and Releases
+
+- **CI** (`.github/workflows/ci.yml`): runs on push/PR to `main` and `workflow_dispatch`. Checks formatting, runs Clippy with `-D warnings`, runs tests, and builds a release binary.
+- **Release** (`.github/workflows/release.yml`): runs on `v*` tags. Validates that the tag matches the `infra_vet` Cargo version, then builds and packages binaries for Linux, Windows, and macOS (x86_64/aarch64 where applicable), generates SHA256 checksums, and publishes a GitHub Release.
+
 ### Configuration
 
 InfraVet loads `infravet.toml` from the root of the scanned directory. Use `-C` / `--config` to load an explicit file instead. If no configuration file is found, built-in defaults are used (no ignored paths, no rule overrides).
@@ -112,6 +117,8 @@ The `infravet.toml` at the repository root is a sample configuration and applies
 
 ```text
 .
+├── .github/
+│   └── workflows/         # CI and release automation
 ├── Cargo.toml
 ├── Cargo.lock
 ├── infravet.toml          # Sample configuration
@@ -144,12 +151,13 @@ The `infravet.toml` at the repository root is a sample configuration and applies
 - [x] Multiple report formats (`cli`, `json`, `markdown`, `html`, `csv`, `junit`, `sarif`).
 - [x] Report exporting to files (`-o` / `--output`).
 - [x] Configurable rules (`infravet.toml`: ignored paths, enable/disable and severity overrides).
+- [x] CI pipeline integration (GitHub Actions: fmt, clippy, tests, build).
+- [x] Release workflow (tagged multi-platform builds, checksums, GitHub Release).
 - [ ] Apply `default-severity` to findings that do not declare a severity.
 - [ ] Full Docker Compose compatibility.
 - [ ] Kubernetes compatibility.
 - [ ] Terraform compatibility.
 - [ ] Ansible compatibility.
-- [ ] CI/CD pipeline integration.
 
 ---
 
