@@ -1,3 +1,4 @@
+---
 name: Infravet Release
 
 "on":
@@ -8,8 +9,9 @@ name: Infravet Release
 permissions:
   contents: read
 
-env:
-  CARGO_TERM_COLOR: always
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -19,11 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
 
       - name: Check version matches tag
         env:
@@ -37,18 +34,14 @@ jobs:
 
           test "$EXPECTED_VERSION" = "$PACKAGE_VERSION"
 
-      - name: Check
-        run: cargo fmt --all --check
-
-      - name: Run Clippy
-        run: cargo clippy --locked --all-targets --all-features -- -D warnings
-
-      - name: Run tests
-        run: cargo test --locked --all-features
+  quality:
+    name: Quality checks
+    needs: validate
+    uses: ./.github/workflows/validate.yml
 
   build:
     name: Build ${{ matrix.target }}
-    needs: validate
+    needs: quality
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -69,6 +62,7 @@ jobs:
 
           - os: macos-latest
             target: aarch64-apple-darwin
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -85,7 +79,7 @@ jobs:
         run: cargo build --locked --release --target ${{ matrix.target }}
 
       - name: Package Unix binary
-        if: runner.os != 'windows'
+        if: runner.os != 'Windows'
         env:
           TARGET: ${{ matrix.target }}
         run: |
@@ -129,7 +123,7 @@ jobs:
       contents: write
 
     steps:
-      - name: Download all artifacs
+      - name: Download all artifacts
         uses: actions/download-artifact@v6
         with:
           path: dist
